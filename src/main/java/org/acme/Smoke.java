@@ -11,6 +11,7 @@ import org.acme.utils.OocTest;
 import org.fao.sws.domain.plain.reference.DimensionValue;
 import org.fao.sws.model.cdi.SwsScope;
 import org.fao.sws.model.config.DatabaseConfiguration;
+import org.fao.sws.model.config.questionnaire.QuestionnairesConfiguration;
 import org.fao.sws.model.dao.DimensionDao;
 import org.fao.sws.model.filter.DimensionFilter;
 import org.junit.Test;
@@ -28,7 +29,18 @@ public class Smoke extends OocTest {
 		
 		assertNotNull(source);
 		assertNotNull(config);
+		assertNotNull(qconfig);	
+	}
+	
+	@Inject
+	QuestionnairesConfiguration qconfig;
+	
+	@Test
+	public void can_load_questionnaires() {
 		
+		qconfig.load();
+		
+		assertFalse(qconfig.getQuestionnaires().isEmpty());
 	}
 	
 	@Test
@@ -53,6 +65,7 @@ public class Smoke extends OocTest {
 																			 .setDataSetCode(ds.getCode())
 																			 .setDimensionCode(dim.getCode()));
 					assertFalse(values.isEmpty());
+					;
 
 				})));
 				

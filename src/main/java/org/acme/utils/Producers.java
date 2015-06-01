@@ -21,7 +21,7 @@ public class Producers {
 		return source;
 	}
 	
-	@Produces @Alternative @SwsScope @ApplicationScoped 
+	@Produces @Alternative @SwsScope 
 	DataSource source(DataSource source) {
 		return source;
 	}

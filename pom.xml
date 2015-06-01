@@ -6,6 +6,7 @@
   
   	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<sws.version>1.1.5-SNAPSHOT</sws.version>
 		<junit.version>4.11</junit.version>
 		<lombok.version>1.16.4</lombok.version>
 		<slf4j.version>1.7.12</slf4j.version>
@@ -13,12 +14,34 @@
 
 	<dependencies>
 
+		<dependency>
+			<groupId>org.fao.sws</groupId>
+			<artifactId>sws-playground</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 
+		<dependency>
+			<groupId>org.fao.sws</groupId>
+			<artifactId>sws-model</artifactId>
+			<version>${sws.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.fao.sws</groupId>
+			<artifactId>sws-ejb</artifactId>
+			<version>${sws.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-jdk14</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
 		<dependency>
 			<groupId>javax.enterprise</groupId>
 			<artifactId>cdi-api</artifactId>
 			<version>1.2</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -26,6 +49,18 @@
 			<artifactId>javax.el-api</artifactId>
 			<version>2.2.5</version>
 			<scope>runtime</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.glassfish.main.javaee-api</groupId>
+			<artifactId>javax.jms</artifactId>
+			<version>3.1.2.2</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.glassfish.main.ejb</groupId>
+		    <artifactId>javax.ejb</artifactId>
+		    <version>3.1.2.2</version>
 		</dependency>
 		
 <!-- 		<dependency>
@@ -73,12 +108,6 @@
 			<groupId>org.jboss.weld.se</groupId>
 			<artifactId>weld-se</artifactId>
 			<version>2.2.11.Final</version>
-		</dependency>
-		
- 		<dependency>
-			<groupId>org.fao.sws</groupId>
-			<artifactId>sws-model</artifactId>
-			<version>1.1.5-SNAPSHOT</version>
 		</dependency>
 		
 		<!-- required by sws-model -->
