@@ -1,16 +1,35 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.fao.sws</groupId>
-  <artifactId>sws-ooc-test</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
-  
-  	<properties>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.fao.sws</groupId>
+	<artifactId>sws-ooc-test</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+
+	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<sws.version>1.1.5-SNAPSHOT</sws.version>
 		<junit.version>4.11</junit.version>
 		<lombok.version>1.16.4</lombok.version>
 		<slf4j.version>1.7.12</slf4j.version>
 	</properties>
+
+
+	<dependencyManagement>
+
+		<dependencies>
+
+			<dependency>
+
+				<groupId>javax.enterprise</groupId>
+				<artifactId>cdi-api</artifactId>
+				<version>1.2</version>
+
+			</dependency>
+		</dependencies>
+
+	</dependencyManagement>
+
+
 
 	<dependencies>
 
@@ -19,63 +38,45 @@
 			<artifactId>sws-playground</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		
+		
 
 		<dependency>
 			<groupId>org.fao.sws</groupId>
 			<artifactId>sws-model</artifactId>
 			<version>${sws.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.fao.sws</groupId>
 			<artifactId>sws-ejb</artifactId>
 			<version>${sws.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>slf4j-jdk14</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		
-		<dependency>
-			<groupId>javax.enterprise</groupId>
-			<artifactId>cdi-api</artifactId>
-			<version>1.2</version>
 		</dependency>
 
-		<dependency>
-			<groupId>javax.el</groupId>
-			<artifactId>javax.el-api</artifactId>
-			<version>2.2.5</version>
-			<scope>runtime</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>org.glassfish.main.javaee-api</groupId>
-			<artifactId>javax.jms</artifactId>
-			<version>3.1.2.2</version>
-		</dependency>
-		
-		<dependency>
-		    <groupId>org.glassfish.main.ejb</groupId>
-		    <artifactId>javax.ejb</artifactId>
-		    <version>3.1.2.2</version>
-		</dependency>
-		
-<!-- 		<dependency>
-			<groupId>org.glassfish.web</groupId>
-			<artifactId>javax.el</artifactId>
-			<version>2.2.5</version>
-			<scope>runtime</scope>
-		</dependency>
 
 		<dependency>
 			<groupId>javax.annotation</groupId>
 			<artifactId>javax.annotation-api</artifactId>
 			<version>1.2</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.jboss.spec</groupId>
+			<artifactId>jboss-javaee-6.0</artifactId>
+			<version>3.0.3.Final</version>
+			<type>pom</type>
 			<scope>provided</scope>
-		</dependency> -->
+		</dependency>
+
+		<dependency>
+			<groupId>org.jboss.weld.se</groupId>
+			<artifactId>weld-se</artifactId>
+			<version>2.2.11.Final</version>
+			<scope>provided</scope>
+		</dependency>
+		
+
 
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -83,63 +84,23 @@
 			<version>${lombok.version}</version>
 		</dependency>
 
-
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
 		</dependency>
 
-
-		<dependency>
-			<groupId>com.googlecode.jeeunit</groupId>
-			<artifactId>jeeunit-weld-se</artifactId>
-			<version>1.0.0</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<artifactId>weld-se-core</artifactId>
-					<groupId>org.jboss.weld.se</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-		<dependency>
-			<groupId>org.jboss.weld.se</groupId>
-			<artifactId>weld-se</artifactId>
-			<version>2.2.11.Final</version>
-		</dependency>
-		
 		<!-- required by sws-model -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>9.3-1101-jdbc41</version>
 		</dependency>
-		
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
 
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>jul-to-slf4j</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<version>${slf4j.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
 	</dependencies>
-  
-  
-  	<build>
+
+
+	<build>
 
 		<plugins>
 
@@ -156,5 +117,45 @@
 		</plugins>
 
 	</build>
-	
+
+
+	<profiles>
+
+		<profile>
+
+			<id>cditest</id>
+
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+
+			<properties>
+				<deltaspike.version>1.4.0</deltaspike.version>
+			</properties>
+
+			<dependencies>
+
+				<dependency>
+					<groupId>org.apache.deltaspike.modules</groupId>
+					<artifactId>deltaspike-test-control-module-impl</artifactId>
+					<version>${deltaspike.version}</version>
+				</dependency>
+
+				<dependency>
+					<groupId>org.apache.deltaspike.core</groupId>
+					<artifactId>deltaspike-core-impl</artifactId>
+					<version>${deltaspike.version}</version>
+				</dependency>
+
+				<dependency>
+					<groupId>org.apache.deltaspike.cdictrl</groupId>
+					<artifactId>deltaspike-cdictrl-weld</artifactId>
+					<version>${deltaspike.version}</version>
+				</dependency>
+
+			</dependencies>
+		</profile>
+
+	</profiles>
+
 </project>
