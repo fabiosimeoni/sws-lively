@@ -36,6 +36,8 @@ public abstract class SwsTest {
 	
 	@BeforeClass
 	public static void $suitesetup() {
+		
+		log.info("cdi container is up");
 		 
 		System.setProperty(DatabaseConfiguration.CONFIG_ROOT_PROPERTY, "src/main/resources");		
 	}
