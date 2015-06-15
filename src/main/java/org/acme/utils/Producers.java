@@ -18,18 +18,6 @@ import org.postgresql.ds.PGSimpleDataSource;
 @ApplicationScoped @Priority(1) //paired with @Alternative, beats no-priority production producers 
 public class Producers {
 
-	@Produces @ApplicationScoped @SneakyThrows
-	DataSource source() {
-		
-		PGSimpleDataSource source = new PGSimpleDataSource();
-		source.setDatabaseName("sws_data");
-		//take a full admin
-		source.setUser("fabio");
-		source.setPassword("fabio");
-		
-		return new TestSource(source);
-	}
-	
 	@Produces @Alternative @SwsScope 
 	DataSource source(DataSource source) {
 		return source;
