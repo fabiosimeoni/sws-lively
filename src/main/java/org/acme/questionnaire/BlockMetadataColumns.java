@@ -12,7 +12,7 @@ import lombok.SneakyThrows;
 import lombok.experimental.ExtensionMethod;
 
 import org.acme.utils.Extensions;
-import org.acme.utils.SwsTest;
+import org.acme.utils.LiveTest;
 import org.fao.sws.ejb.DimensionService;
 import org.fao.sws.ejb.QuestionnairesService;
 import org.fao.sws.model.config.questionnaire.QuestionnaireConfiguration;
@@ -20,12 +20,14 @@ import org.fao.sws.model.config.questionnaire.QuestionnairesConfiguration;
 import org.fao.sws.model.dao.BlockMetadataDao;
 import org.fao.sws.model.dao.impl.mapping.BlockMetadataQuestionnaireDto;
 import org.fao.sws.model.dao.impl.mapping.DataProvider;
+import org.fao.sws.model.dto.QuestionnaireExportDto;
 import org.fao.sws.model.filter.DimensionFilter;
+import org.fao.sws.web.rest.QuestionnaireRest;
 import org.junit.Before;
 import org.junit.Test;
 
 @ExtensionMethod(Extensions.class)
-public class BlockMetadataColumns extends SwsTest {
+public class BlockMetadataColumns extends LiveTest {
 
 	QuestionnairesConfiguration questionnaires = new QuestionnairesConfiguration();
 	QuestionnaireConfiguration questionnaire;
@@ -37,6 +39,16 @@ public class BlockMetadataColumns extends SwsTest {
 	
 	@Inject
 	DimensionService dims;
+	
+	@Inject
+	BlockMetadataDao dao;
+	
+	@Inject
+	QuestionnairesService ejb;
+	
+	@Inject
+	QuestionnaireRest service;
+
 	
 	@Before 
 	public void setup() {
@@ -62,10 +74,8 @@ public class BlockMetadataColumns extends SwsTest {
 	}
 
 	
-	@Inject
-	BlockMetadataDao dao;
 	
-	@Test @SneakyThrows
+	@Test @SneakyThrows 
 	public void query_can_be_executed() {
 		
 		@Cleanup DataProvider<BlockMetadataQuestionnaireDto> result = dao.getBlockMetadataProvider(questionnaire, keyforFrance, keyfor2013);
@@ -79,11 +89,8 @@ public class BlockMetadataColumns extends SwsTest {
 
 	}
 	
-	@Inject
-	QuestionnairesService ejb;
-	
 	@Test
-	public void questionnaire_with_block_metadata_can_be_generated() {
+	public void ejb_creates_correct_questionnaire() {
 	
 		File file = new File("target/q.xls");
 		
@@ -92,6 +99,19 @@ public class BlockMetadataColumns extends SwsTest {
 								codefor2013, 
 								codeforFrance, 
 								file);
+		
+	}
+	
+	@Test @SneakyThrows
+	public void service_generates_questionnaire() {
+	
+		QuestionnaireExportDto dto = new QuestionnaireExportDto(questionnaire.getName(), codefor2013, codeforFrance);
+		
+		dto.setDownloadBaseUrl("target");
+		
+		service.startQuestionnaireExport(dto);
+		
+		Thread.sleep(10000);
 		
 	}
 

@@ -1,43 +1,47 @@
 package org.acme.utils;
 
-import javax.annotation.Priority;
-import javax.ejb.TimerService;
+import javax.annotation.Resource;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Produces;
-import javax.jms.Queue;
+import javax.jms.ConnectionFactory;
+import javax.jms.DeliveryMode;
 import javax.sql.DataSource;
-import javax.transaction.UserTransaction;
 
 import lombok.SneakyThrows;
 
-import org.acme.utils.Transactions.TestSource;
 import org.fao.sws.model.cdi.SwsScope;
-import org.postgresql.ds.PGSimpleDataSource;
+import org.springframework.jms.core.JmsTemplate;
 
-@ApplicationScoped @Priority(1) //paired with @Alternative, beats no-priority production producers 
+/**
+ * Produce test doubles with precedence over production beans.
+ * Reason here is to bypass access to JNDI that doesn't work with openejb.
+ * So this is not a feature, it's a (nice) workaround to bypass non portable JNDI access.
+ */
+@ApplicationScoped 
+@TestDouble //gotta mark the class as double _as well as_ the produced beans
 public class Producers {
 
-	@Produces @Alternative @SwsScope 
-	DataSource source(DataSource source) {
+	//injecting is the easiest way to ignore JNDI
+	
+	@Resource
+	DataSource source;
+	
+	@Resource
+	ConnectionFactory queues;
+	
+	
+	@Produces @ApplicationScoped @TestDouble @SwsScope
+	@SneakyThrows 
+	DataSource localdb() {
 		return source;
 	}
 	
-	@Produces @ApplicationScoped
-	Queue noqueue() {
-		return null;
+	@Produces @ApplicationScoped @TestDouble @SwsScope
+	@SneakyThrows 
+	JmsTemplate jmsTemplate() {
+		JmsTemplate template = new JmsTemplate(queues);
+		template.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+		return template;
 	}
 	
-	@Produces @ApplicationScoped
-	TimerService notimer() {
-		return null;
-	}
-	
-	@Produces @ApplicationScoped
-	UserTransaction notransaction() {
-		return null;
-	}
-	
-	
-
 }
