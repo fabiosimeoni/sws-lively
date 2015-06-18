@@ -3,7 +3,8 @@ Out-of-Container IntegrationTests for the SWS.
 
 #Howto
 
-- match LocalSource#source() to match your local PG installation, user must be full admin.
+- configure `src/main/resources/connection.properties` to match your local PG installation (note: user must be full admin).
 - link your "domain1"'s `config` to `src/main/resource/config` and tests will hook to it. it's git-ignored. 
-- you need `sws-domain`, `sws-model`, and [`sws-plaground`](https://github.com/fabiosimeoni/sws-playground) in the workspace (we have no mvn repo to host them).
+- make sure `sws-domain`, `sws-model`,  `sws-web` and [`sws-playground`](https://github.com/fabiosimeoni/sws-playground) are in the workspace (we have no mvn repo to host them).
+- derive suites from `LiveTest` and inject to your heart's content.
 

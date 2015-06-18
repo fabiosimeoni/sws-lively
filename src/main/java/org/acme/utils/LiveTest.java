@@ -1,9 +1,11 @@
 package org.acme.utils;
 
+import static java.lang.String.*;
 import static java.lang.System.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.annotation.Resource;
 import javax.ejb.embeddable.EJBContainer;
@@ -97,17 +99,22 @@ public class LiveTest {
 	}
 	
 	
+	@SneakyThrows
 	static void start_container() {
 		
 		log.info("starting container...");
+		
+		Properties properties = new Properties();
+		
+		properties.load(LiveTest.class.getResourceAsStream("/connection.properties"));
 		
 		Map<String,String> props = new HashMap<>();
 		
 		props.put("db", "new://Resource?type=DataSource");
 		props.put("db.JdbcDriver", "org.postgresql.xa.PGXADataSource");
-		props.put("db.JdbcUrl", "jdbc:postgresql:sws_data");
-		props.put("db.UserName", "fabio");
-		props.put("db.Password", "fabio");
+		props.put("db.JdbcUrl", format("jdbc:postgresql:%s",properties.getProperty("db")));
+		props.put("db.UserName", properties.getProperty("user"));
+		props.put("db.Password", properties.getProperty("password"));
 		props.put("db.JtaManaged", "true");
 		
 		props.put("openejb.log.factory", Slf4jLogStreamFactory.class.getCanonicalName()); //slf4j

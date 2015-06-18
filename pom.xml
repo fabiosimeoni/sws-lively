@@ -11,7 +11,7 @@
 		<junit.version>4.11</junit.version>
 		<lombok.version>1.16.4</lombok.version>
 		<slf4j.version>1.7.12</slf4j.version>
-		<deltaspike.version>1.4.0</deltaspike.version>
+		<deltaspike.version>1.4.1</deltaspike.version>
 	</properties>
 
 
