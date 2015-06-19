@@ -3,6 +3,7 @@ package org.acme.utils;
 import static java.lang.String.*;
 import static java.lang.System.*;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -106,7 +107,12 @@ public class LiveTest {
 		
 		Properties properties = new Properties();
 		
-		properties.load(LiveTest.class.getResourceAsStream("/connection.properties"));
+		InputStream stream = LiveTest.class.getResourceAsStream("/connection.properties");
+		
+		if (stream==null)
+			throw new RuntimeException("what happened to connection.properties??");
+		
+		properties.load(stream);
 		
 		Map<String,String> props = new HashMap<>();
 		
