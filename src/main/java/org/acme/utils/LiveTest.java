@@ -12,6 +12,7 @@ import javax.annotation.Resource;
 import javax.ejb.embeddable.EJBContainer;
 import javax.inject.Inject;
 import javax.jms.ConnectionFactory;
+import javax.transaction.UserTransaction;
 
 import lombok.SneakyThrows;
 
@@ -38,14 +39,17 @@ public class LiveTest {
 	public static EJBContainer container;
 	
 	@Inject
-	static UserService users;
+	protected static UserService allusers;
+	
+	@Inject
+	protected static UserTransaction tx;
 	
 	@Resource
 	ConnectionFactory factory;
 	
 	static SecurityContextCreator sctx;
 	
-	User user;
+	protected User currentuser;
 	
 	@BeforeClass @SneakyThrows
 	public static void startContainer() {
@@ -62,13 +66,17 @@ public class LiveTest {
 	public void startTest() {
 		
 		inject_testcase();
-				
+		
+		tx.begin();
+		
 		login_a_superuser();
 	}
 	
 	
-	@After
+	@After @SneakyThrows
 	public void endTest() {
+		
+		tx.rollback();
 		
 		//a bit academic...
 		sctx.remove();
@@ -144,8 +152,8 @@ public class LiveTest {
 	
 	void login_a_superuser() {
 		
-		user = users.getUser("FAODOMAIN/browningj");
-		sctx = new SecurityContextCreator(user,false);
+		currentuser = allusers.getUser("FAODOMAIN/demaio");
+		sctx = new SecurityContextCreator(currentuser,false);
 		sctx.bind();
 	}
 	
