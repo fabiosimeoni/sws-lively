@@ -18,7 +18,9 @@ import lombok.SneakyThrows;
 
 import org.apache.openejb.api.LocalClient;
 import org.apache.openejb.util.Slf4jLogStreamFactory;
+import org.fao.sws.domain.plain.operational.Group;
 import org.fao.sws.domain.plain.operational.User;
+import org.fao.sws.ejb.GroupService;
 import org.fao.sws.ejb.UserService;
 import org.fao.sws.ejb.security.SecurityContextCreator;
 import org.fao.sws.model.config.DatabaseConfiguration;
@@ -51,7 +53,10 @@ public class LiveTest {
 	
 	protected User currentuser;
 	
-	@BeforeClass @SneakyThrows
+	
+	//////////    test management  //////////////////////////////////////////////////////////////////////////////////
+	
+	@BeforeClass
 	public static void startContainer() {
 	
 		configure_local_environment();
@@ -69,7 +74,7 @@ public class LiveTest {
 		
 		tx.begin();
 		
-		login_a_superuser();
+		login(aUserIn(anAdminGroup()));
 	}
 	
 	
@@ -82,18 +87,6 @@ public class LiveTest {
 		sctx.remove();
 		
 	}
-	
-	@AfterClass
-	public static void stopContainer() {
-		
-		//clashes with shutdown hook of jms broker
-		//pointless anyway as this test is live and all dies when we finish.
-		//container.close();
-		
-	}
-	
-	
-	////////////////////////////////////////////////////////////////////////////////////////////
 	
 	static void configure_local_environment() {
 	
@@ -144,17 +137,82 @@ public class LiveTest {
 		log.info("container ready in {} secs.", (float)(currentTimeMillis()-now)/1000);
 		
 	}
+	
+	@AfterClass
+	public static void stopContainer() {
+		
+		//clashes with shutdown hook of jms broker
+		//pointless anyway as this test is live and all dies when we finish.
+		//container.close();
+		
+	}
 
 	@SneakyThrows
 	void inject_testcase() {
 		container.getContext().bind("inject",this);
 	}
 	
-	void login_a_superuser() {
+	
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	
+	@Inject
+	GroupService groups;
+	
+	public Group anAdminGroup() {
 		
-		currentuser = allusers.getUser("FAODOMAIN/demaio");
+		
+		return aGroup(true);
+		
+	}
+	
+	public Group aRegularGroup() {
+		
+		
+		return aGroup(true);
+		
+	}
+	
+	public Group aGroup() {
+		
+		return groups.getAllGroups(true).get(0);
+		
+	}
+	
+	private Group aGroup(boolean admin) {
+		
+		
+		return groups.getAllGroups(true).stream().filter(g->g.isAdministrator()==admin).findAny().get();
+		
+	}
+	
+	public User anAdmin() {
+		
+		return aUserIn(anAdminGroup());
+
+	}
+	
+	public void login(User user) {
+		
+		log.info("logging in {}",user.getUsername());
+		currentuser = user;
+		
+		if (currentuser==null)
+			throw new IllegalArgumentException("test error: unknown user "+user);
+		
 		sctx = new SecurityContextCreator(currentuser,false);
 		sctx.bind();
+	}
+	
+	
+	public User aUserIn(Group group) {
+		
+		return allusers.getUsersByGrpId(group.getId())
+											  .stream()
+											  .findAny()
+											  .orElseThrow(()->new IllegalStateException("no users in group "+group.getName()));
+
+		
 	}
 	
 	
