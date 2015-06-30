@@ -11,8 +11,8 @@ import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.experimental.ExtensionMethod;
 
-import org.acme.utils.Extensions;
-import org.acme.utils.LiveTest;
+import org.acme.ooc.LiveTest;
+import org.acme.ooc.support.Extensions;
 import org.fao.sws.ejb.DimensionService;
 import org.fao.sws.ejb.QuestionnairesService;
 import org.fao.sws.model.config.questionnaire.QuestionnaireConfiguration;

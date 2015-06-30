@@ -1,4 +1,4 @@
-package org.acme.utils;
+package org.acme.ooc.support;
 
 import javax.annotation.Resource;
 import javax.enterprise.context.ApplicationScoped;

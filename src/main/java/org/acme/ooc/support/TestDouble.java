@@ -1,4 +1,4 @@
-package org.acme.utils;
+package org.acme.ooc.support;
 
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.*;

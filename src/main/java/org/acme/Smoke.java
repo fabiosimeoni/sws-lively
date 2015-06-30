@@ -1,5 +1,7 @@
 package org.acme;
 
+import static org.acme.ooc.Common.*;
+import static org.acme.ooc.Users.*;
 import static org.junit.Assert.*;
 
 import java.util.List;
@@ -8,7 +10,7 @@ import javax.inject.Inject;
 
 import lombok.SneakyThrows;
 
-import org.acme.utils.LiveTest;
+import org.acme.ooc.LiveTest;
 import org.fao.sws.domain.plain.reference.DimensionValue;
 import org.fao.sws.model.config.DatabaseConfiguration;
 import org.fao.sws.model.config.questionnaire.QuestionnairesConfiguration;
@@ -20,6 +22,14 @@ public class Smoke extends LiveTest {
 
 	@Inject
 	DatabaseConfiguration config;
+	
+	@Test
+	public void userstest() {
+	
+		show(regularUsers(),u->u.getUsername());
+		
+	}
+	
 	
 	@Test
 	public void configuration_is_available() {

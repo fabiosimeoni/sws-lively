@@ -1,7 +1,9 @@
-package org.acme.utils;
+package org.acme.ooc;
 
 import static java.lang.String.*;
 import static java.lang.System.*;
+import static org.acme.ooc.Common.*;
+import static org.acme.ooc.Users.*;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -10,46 +12,44 @@ import java.util.Properties;
 
 import javax.annotation.Resource;
 import javax.ejb.embeddable.EJBContainer;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.jms.ConnectionFactory;
 import javax.transaction.UserTransaction;
 
 import lombok.SneakyThrows;
 
+import org.acme.ooc.support.SecurityContext;
 import org.apache.openejb.api.LocalClient;
 import org.apache.openejb.util.Slf4jLogStreamFactory;
-import org.fao.sws.domain.plain.operational.Group;
 import org.fao.sws.domain.plain.operational.User;
-import org.fao.sws.ejb.GroupService;
-import org.fao.sws.ejb.UserService;
-import org.fao.sws.ejb.security.SecurityContextCreator;
 import org.fao.sws.model.config.DatabaseConfiguration;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 
 @LocalClient
 public class LiveTest {
 	
-	public static Logger log = LoggerFactory.getLogger("test");
+
+
+	public static class Start {}
 	
 	public static EJBContainer container;
 	
 	@Inject
-	protected static UserService allusers;
+	protected static UserTransaction tx;
 	
 	@Inject
-	protected static UserTransaction tx;
+	protected static Event<Start> events;
 	
 	@Resource
 	ConnectionFactory factory;
 	
-	static SecurityContextCreator sctx;
+	static SecurityContext sctx;
 	
 	protected User currentuser;
 	
@@ -72,9 +72,11 @@ public class LiveTest {
 		
 		inject_testcase();
 		
+		events.fire(new Start());
+		
 		tx.begin();
 		
-		login(aUserIn(anAdminGroup()));
+		login(anAdmin());
 	}
 	
 	
@@ -83,9 +85,7 @@ public class LiveTest {
 		
 		tx.rollback();
 		
-		//a bit academic...
-		sctx.remove();
-		
+		logout(); //a bit academic...
 	}
 	
 	static void configure_local_environment() {
@@ -150,69 +150,6 @@ public class LiveTest {
 	@SneakyThrows
 	void inject_testcase() {
 		container.getContext().bind("inject",this);
-	}
-	
-	
-	//////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	
-	@Inject
-	GroupService groups;
-	
-	public Group anAdminGroup() {
-		
-		
-		return aGroup(true);
-		
-	}
-	
-	public Group aRegularGroup() {
-		
-		
-		return aGroup(true);
-		
-	}
-	
-	public Group aGroup() {
-		
-		return groups.getAllGroups(true).get(0);
-		
-	}
-	
-	private Group aGroup(boolean admin) {
-		
-		
-		return groups.getAllGroups(true).stream().filter(g->g.isAdministrator()==admin).findAny().get();
-		
-	}
-	
-	public User anAdmin() {
-		
-		return aUserIn(anAdminGroup());
-
-	}
-	
-	public void login(User user) {
-		
-		log.info("logging in {}",user.getUsername());
-		currentuser = user;
-		
-		if (currentuser==null)
-			throw new IllegalArgumentException("test error: unknown user "+user);
-		
-		sctx = new SecurityContextCreator(currentuser,false);
-		sctx.bind();
-	}
-	
-	
-	public User aUserIn(Group group) {
-		
-		return allusers.getUsersByGrpId(group.getId())
-											  .stream()
-											  .findAny()
-											  .orElseThrow(()->new IllegalStateException("no users in group "+group.getName()));
-
-		
 	}
 	
 	

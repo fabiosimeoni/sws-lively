@@ -7,7 +7,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<sws.version>1.1.6-SNAPSHOT</sws.version>
+		<sws.version>1.1.6-sws947</sws.version>
 		<junit.version>4.11</junit.version>
 		<lombok.version>1.16.4</lombok.version>
 		<slf4j.version>1.7.12</slf4j.version>
