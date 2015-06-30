@@ -1,4 +1,4 @@
-package org.acme.ooc.support;
+package org.fao.sws.lively.core;
 
 import java.util.ArrayList;
 import java.util.List;

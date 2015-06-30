@@ -1,4 +1,4 @@
-package org.acme.ooc.support;
+package org.fao.sws.lively.core;
 
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.*;

@@ -1,9 +1,9 @@
-package org.acme.ooc;
+package org.fao.sws.lively;
 
 import static java.lang.String.*;
 import static java.lang.System.*;
-import static org.acme.ooc.Common.*;
-import static org.acme.ooc.Users.*;
+import static org.fao.sws.lively.modules.Common.*;
+import static org.fao.sws.lively.modules.Users.*;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -19,10 +19,10 @@ import javax.transaction.UserTransaction;
 
 import lombok.SneakyThrows;
 
-import org.acme.ooc.support.SecurityContext;
 import org.apache.openejb.api.LocalClient;
 import org.apache.openejb.util.Slf4jLogStreamFactory;
 import org.fao.sws.domain.plain.operational.User;
+import org.fao.sws.lively.core.SecurityContext;
 import org.fao.sws.model.config.DatabaseConfiguration;
 import org.junit.After;
 import org.junit.AfterClass;

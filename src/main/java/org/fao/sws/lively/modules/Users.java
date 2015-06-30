@@ -1,4 +1,4 @@
-package org.acme.ooc;
+package org.fao.sws.lively.modules;
 
 import static java.util.Arrays.*;
 
@@ -9,7 +9,6 @@ import javax.enterprise.event.Observes;
 
 import lombok.experimental.UtilityClass;
 
-import org.acme.ooc.support.SecurityContext;
 import org.fao.sws.domain.operational.Privilege;
 import org.fao.sws.domain.plain.operational.Group;
 import org.fao.sws.domain.plain.operational.Permission;
@@ -17,6 +16,8 @@ import org.fao.sws.domain.plain.operational.User;
 import org.fao.sws.ejb.GroupService;
 import org.fao.sws.ejb.PermissionService;
 import org.fao.sws.ejb.UserService;
+import org.fao.sws.lively.LiveTest;
+import org.fao.sws.lively.core.SecurityContext;
 import org.fao.sws.model.filter.PermissionFilter;
 
 @UtilityClass

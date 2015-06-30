@@ -1,4 +1,4 @@
-package org.acme.ooc;
+package org.fao.sws.lively.modules;
 
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -12,6 +12,7 @@ import org.fao.sws.domain.plain.operational.ComputationScheduled;
 import org.fao.sws.domain.plain.operational.ComputationScheduled.ComputationScheduledParameters;
 import org.fao.sws.ejb.ComputationModuleService;
 import org.fao.sws.ejb.ComputationScheduledService;
+import org.fao.sws.lively.LiveTest;
 import org.fao.sws.model.filter.ComputationModuleFilter;
 
 @UtilityClass

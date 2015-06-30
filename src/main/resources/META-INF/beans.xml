@@ -4,6 +4,6 @@
     http://xmlns.jcp.org/xml/ns/javaee/beans_1_1.xsd"
        bean-discovery-mode="annotated">
        <alternatives>
-       		<stereotype>org.acme.ooc.support.TestDouble</stereotype>
+       		<stereotype>org.fao.sws.lively.core.TestDouble</stereotype>
        </alternatives>
 </beans>

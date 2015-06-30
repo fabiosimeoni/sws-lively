@@ -1,4 +1,4 @@
-package org.acme.ooc.support;
+package org.fao.sws.lively.core;
 
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;

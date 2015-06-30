@@ -1,9 +1,9 @@
-package org.acme.security;
+package org.acme.users;
 
-import static org.acme.ooc.Common.*;
-import static org.acme.ooc.Modules.*;
-import static org.acme.ooc.Users.*;
 import static org.fao.sws.domain.operational.Privilege.*;
+import static org.fao.sws.lively.modules.Common.*;
+import static org.fao.sws.lively.modules.Modules.*;
+import static org.fao.sws.lively.modules.Users.*;
 import static org.junit.Assert.*;
 
 import java.util.List;
@@ -11,7 +11,6 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 
-import org.acme.ooc.LiveTest;
 import org.fao.sws.domain.plain.operational.ComputationExecution;
 import org.fao.sws.domain.plain.operational.ComputationModule;
 import org.fao.sws.domain.plain.operational.Group;
@@ -22,6 +21,7 @@ import org.fao.sws.domain.r.jaxb.MainDataset;
 import org.fao.sws.ejb.ObservationService;
 import org.fao.sws.ejb.dto.ComputationModuleDto;
 import org.fao.sws.ejb.security.UnauthorizedApplicationException;
+import org.fao.sws.lively.LiveTest;
 import org.fao.sws.model.config.ConversionTableConfiguration;
 import org.fao.sws.model.config.DatabaseConfiguration;
 import org.fao.sws.model.dao.ComputationExecutionDao;

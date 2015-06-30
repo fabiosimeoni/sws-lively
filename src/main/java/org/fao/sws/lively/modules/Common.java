@@ -1,4 +1,4 @@
-package org.acme.ooc;
+package org.fao.sws.lively.modules;
 
 import static com.google.common.base.Objects.*;
 import static java.util.stream.Collectors.*;
