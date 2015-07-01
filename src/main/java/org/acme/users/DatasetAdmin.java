@@ -32,6 +32,7 @@ import org.fao.sws.web.dto.ComputationModulePermissionDto;
 import org.fao.sws.web.dto.ConversionTablesDto;
 import org.fao.sws.web.dto.PermissionDto;
 import org.fao.sws.web.dto.UserDto;
+import org.fao.sws.web.rest.ComputationExecutionRest;
 import org.fao.sws.web.rest.ComputationModuleRest;
 import org.fao.sws.web.rest.ConversionTableRest;
 import org.fao.sws.web.rest.GroupRest;
@@ -270,7 +271,7 @@ public class DatasetAdmin extends LiveTest {
 	
 	
 	@Inject
-	ComputationModuleRest modules;
+	ComputationModuleRest moduleService;
 	
 
 	@Inject
@@ -280,13 +281,11 @@ public class DatasetAdmin extends LiveTest {
 	@Inject
 	ComputationScheduledDao scheduledcomputations;
 	
-	
-	
 	/**
 	 * @see ComputationModuleRest#getComputationModules(Boolean)
 	 */
 	@Test
-	public void dataset_admins_can_only_see_modules_defined_over_their_datasets() {
+	public void dataset_admins_can_see_modules_defined_over_their_datasets() {
 
 		ComputationModule module = aModule();
 		
@@ -300,18 +299,18 @@ public class DatasetAdmin extends LiveTest {
 		
 		login(user);
 		
-		assertTrue(modules.getComputationModules(true).getResults().isEmpty());
+		assertTrue(moduleService.getComputationModules(true).getResults().isEmpty());
 		
 		assign(ADMIN).to(user).over(permission);
 		
-		modules.getComputationModules(true)
+		moduleService.getComputationModules(true)
 									.getResults()
 									.stream()
 									.peek(g->log.info("category: {}",g.getCategory()))
 									.flatMap(g->g.getComputations().stream())
 									.forEach(m->log.info("--module: {}, owner {}",m.getCode(),m.getOwnerName()));
 		
-		Optional<ComputationModuleDto> dtoForInitialModule = modules.getComputationModules(true)
+		Optional<ComputationModuleDto> dtoForInitialModule = moduleService.getComputationModules(true)
 																	.getResults().stream()
 																	.flatMap(g->g.getComputations().stream())
 																	.filter(m->m.getUid().equals(module.getId()))
@@ -323,8 +322,57 @@ public class DatasetAdmin extends LiveTest {
 		
 	}
 	
+	
+	@Inject
+	ComputationExecutionRest executions;
+	
+	/**
+	 * @see ComputationExecutionRest#list(Long, Long, Boolean, Long, org.fao.sws.domain.plain.operational.ComputationExecution.Status, Long)
+	 */
 	@Test
-	public void dataset_admins_can_only_see_permissions_of_modules_defined_over_their_datasets() {
+	public void dataset_admins_can_see_executions_defined_over_their_datasets() {
+		
+		User user = users.getUser("faodomain/simeoni");
+		
+		login(user);
+		
+		executions.list(null,null,false,null,null,null).getResults();
+		
+		
+	}
+	
+	@Inject
+	public ConversionTableRest tableService;
+	
+	@Test
+	public void download_module() {
+		
+		User user = users.getUser("faodomain/simeoni");
+		
+		login(user);
+		
+		moduleService.downloadComputationModuleByNameAndVersion("BugfixTest", 2);
+		
+		
+	}
+	
+	
+	@Test
+	public void dataset_admins_can_see_their_conversion_tables() {
+		
+		User user = users.getUser("faodomain/simeoni");
+		
+		login(user);
+		
+		List<ConversionTablesDto> dtos = tableService.getAllConversionTablesCodes().getResults();
+		
+		show(dtos,t->t.getConversionTableCode());
+		
+		
+	}
+	
+	@Test
+	public void dataset_admins_can_see_permissions_of_modules_defined_over_their_datasets() {
 	
 		ComputationModule module = aModule();
 		
@@ -336,7 +384,7 @@ public class DatasetAdmin extends LiveTest {
 		
 		login(user);
 		
-		List<ComputationModulePermissionDto> permissions = modules.getPermissions(module.getId()).getResults();
+		List<ComputationModulePermissionDto> permissions = moduleService.getPermissions(module.getId()).getResults();
 		
 		show(permissions,p->p.getId());
 		
@@ -344,7 +392,7 @@ public class DatasetAdmin extends LiveTest {
 		
 		assign(ADMIN).to(user).over(permission);
 		
-		permissions = modules.getPermissions(module.getId()).getResults();
+		permissions = moduleService.getPermissions(module.getId()).getResults();
 		
 		assertFalse(permissions.isEmpty());
 	}
@@ -352,7 +400,7 @@ public class DatasetAdmin extends LiveTest {
 	
 	
 	@Test
-	public void dataset_admins_can_only_see_computations_defined_over_their_datasets() {
+	public void dataset_admins_can_see_scheduled_executions_defined_over_their_datasets() {
 
 		ComputationModule module = aModule();
 		
@@ -380,11 +428,11 @@ public class DatasetAdmin extends LiveTest {
 	
 	
 	@Test
-	public void dataset_admins_can_only_see_history_of_computations_defined_over_their_datasets() {
+	public void dataset_admins_can_only_see_history_of_modules_defined_over_their_datasets() {
 
 		ComputationModule module = aModule();
 		
-		List<ComputationModuleDto> history = modules.getComputationModules(module.getName(),module.isCoreScript()).getResults();
+		List<ComputationModuleDto> history = moduleService.getComputationModules(module.getName(),module.isCoreScript()).getResults();
 		
 		show(history, c->c.getStart());
 		
@@ -396,43 +444,16 @@ public class DatasetAdmin extends LiveTest {
 		
 		login(user);
 		
-		history = modules.getComputationModules(module.getName(),module.isCoreScript()).getResults();
+		history = moduleService.getComputationModules(module.getName(),module.isCoreScript()).getResults();
 		
 		assertTrue(history.isEmpty());
 		
 		assign(ADMIN).to(user).over(permission);
 		
-		history = modules.getComputationModules(aModule().getName(),aModule().isCoreScript()).getResults();
+		history = moduleService.getComputationModules(aModule().getName(),aModule().isCoreScript()).getResults();
 		
 		assertFalse(history.isEmpty());
 	}
-	
-	
-	@Test
-	public void dataset_admins_can_only_see_scheduled_computations_defined_over_their_datasets() {
-
-		ComputationModule module = aModule();
-		
-		schedule(module);
-		
-		boolean hasBeenScheduled = !scheduledcomputations.findAll().isEmpty();
-		
-		assertTrue(hasBeenScheduled);
-		
-		Permission permission = aRegularPermissionOfaRegularGroupOver(mainDatasetOf(module));
-		
-		User user = aUserIn(permission.getGroup());
-		
-		login(user);
-		
-		assertTrue(scheduledcomputations.findAllComputationScheduledPermitted().isEmpty());
-		
-		assign(ADMIN).to(user).over(permission);
-		
-		assertFalse(scheduledcomputations.findAllComputationScheduledPermitted().isEmpty());
-		
-	}
-	
 	@Inject
 	ObservationService observations;
 	

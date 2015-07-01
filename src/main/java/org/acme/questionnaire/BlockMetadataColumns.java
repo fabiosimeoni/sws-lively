@@ -1,6 +1,5 @@
 package org.acme.questionnaire;
 
-import static org.fao.sws.model.configuration.Dsl.*;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -58,17 +57,17 @@ public class BlockMetadataColumns extends LiveTest {
 		
 		questionnaire = questionnaires.getQuestionnaire("ap-main");
 		
-		DimensionFilter M49inAgriculture = domain("agriculture")
-									.with(dataset("agriculture")
-									.with(dimension("geographicAreaM49").ref()))
-									.filter();
+		DimensionFilter M49inAgriculture = new DimensionFilter()
+														.setDomainCode("agriculture")
+														.setDataSetCode("agriculture")
+														.setDimensionCode("geographicAreaM49");
 		
 		keyforFrance = dims.getDimensionValue(M49inAgriculture.setDimensionValueCode(codeforFrance)).getId();
 		
-		DimensionFilter yearsInAgriculture = domain("agriculture")
-				.with(dataset("agriculture")
-				.with(dimension("timePointYears").ref()))
-				.filter();
+		DimensionFilter yearsInAgriculture = new DimensionFilter()
+														.setDomainCode("agriculture")
+														.setDataSetCode("agriculture")
+														.setDimensionCode("timePointYears");
 		
 		keyfor2013 = dims.getDimensionValue(yearsInAgriculture.setDimensionValueCode(codefor2013)).getId();
 	}
