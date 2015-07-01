@@ -6,7 +6,7 @@ Run automated `@Test`s in an embedded EJB container without build, packaging, an
 
 - configure `src/main/resources/connection.properties` to match your local `postgres` installation (note: user must be full admin).
 - soft-link your "domain1"'s `config` to `src/main/resource/config` and tests will hook to it (it's `git`-ignored). 
-- make sure `sws-domain`, `sws-model`,  `sws-web` and [`sws-playground`](https://github.com/fabiosimeoni/sws-playground) are in the workspace (we have no mvn repo to host them).
+- make sure `sws` project is in the workspace, as it will need to be `mvn`-resolved from there (we have no `mvn` repo to host it).
 - adjust the `<sws.version>` you want to work with in `pom.xml` (e.g. point it to trunk, or a freature branch)
 - derive test suites from `LiveTest`.
 
