@@ -2,6 +2,7 @@ package org.acme.users;
 
 import static org.fao.sws.domain.operational.Privilege.*;
 import static org.fao.sws.lively.modules.Common.*;
+import static org.fao.sws.lively.modules.Configuration.*;
 import static org.fao.sws.lively.modules.Modules.*;
 import static org.fao.sws.lively.modules.Users.*;
 import static org.junit.Assert.*;
@@ -27,7 +28,6 @@ import org.fao.sws.model.config.DatabaseConfiguration;
 import org.fao.sws.model.dao.ComputationExecutionDao;
 import org.fao.sws.model.dao.ComputationScheduledDao;
 import org.fao.sws.model.filter.ComputationExecutionFilter;
-import org.fao.sws.model.filter.PermissionFilter;
 import org.fao.sws.web.dto.ComputationModulePermissionDto;
 import org.fao.sws.web.dto.ConversionTablesDto;
 import org.fao.sws.web.dto.PermissionDto;
@@ -48,98 +48,199 @@ import org.junit.Test;
 public class DatasetAdmin extends LiveTest {
 	
 	@Inject
-	UserRest userservice;
+	UserRest userapi;
 	
 	@Inject
-	ConversionTableRest tableservice;
+	ConversionTableRest tableapi;
 	
 	@Inject
 	DatabaseConfiguration config;
 	
+	
+	///////////////// basic support   //////////////////////////////////////////////////////////////////////
+	
 	@Test
 	public void add_read_and_verify_admin_permission_for_group() {
 		
-		Permission permission = aRegularPermissionOfaRegularGroup();
+		User user = aNewUser();
+		DataSet dataset = aDataset();
 		
-		permission.getPrivileges().add(ADMIN);
+		assertFalse(groupservice.adminsDataset(groupOf(user),dataset));
+		assertFalse(userservice.adminsDataset(user,dataset));
 		
-		update(permission);
+		assign(ADMIN).to(groupOf(user)).over(dataset);
 		
-		permission = reload(permission);
-		
-		assertTrue(groups.adminsDataset(permission.getGroup(),permission.getDataSet()));
-	}
-	
-		
-	@Test
-	public void verify_admin_permission_for_user() {
-		
-		Permission permission = aRegularPermissionOfaRegularGroup();
-		
-		DataSet dataset = permission.getDataSet();
-		
-		User user = aUserIn(permission.getGroup());
-		
-		assertFalse(users.adminsDataset(user,dataset));
-		
-		permission.getPrivileges().add(ADMIN);
-		
-		update(permission);
-		
-		assertTrue(users.adminsDataset(user,dataset));
+		assertTrue(groupservice.adminsDataset(groupOf(user),dataset));
+		assertTrue(userservice.adminsDataset(user,dataset));
 	}
 	
 	
 	@Test
 	public void admin_permission_implies_any_other_permission() {
 		
-		Permission permission = aRegularPermissionOfaRegularGroup();
-		
-		permission.getPrivileges().remove(READ);
-		
-		update(permission);
-		
-		permission = reload(permission);
+		Permission permission = assign(WRITE).to(aNewGroup()).over(aDataset());
 		
 		assertFalse(permission.isRead());
 		
-		permission.getPrivileges().add(ADMIN);
-		
-		update(permission);
-		
-		permission = reload(permission);
-		
+		permission = add(ADMIN).to(permission);
+				
 		assertTrue(permission.isRead());
 	}
 	
 	
+	/////////////////// DAs and user management ////////////////////////////////////////////////////////
+	
+	
 	@Test
-	public void dataset_admins_can_change_permissions_to_their_datasets() {
+	public void DAs_can_change_permissions_to_their_datasets() {
 
-		Permission permission = aRegularPermissionOfaRegularGroup();
+		User user = aNewUser();
 		
-		User user = aUserIn(permission.getGroup());
+		Permission permission = assign(READ).to(groupOf(user)).over(aDataset());
 		
 		login(user);
 		
 		try {
 			
-			update(permission);
+			 //low-level up that requires admin privileges
+			 permissionservice.update(with(permission));
 
 			fail();
 		}
 		catch(UnauthorizedApplicationException expected) {}
 		
-		assign(ADMIN).to(user).over(permission);
+		sudo(() -> 
 		
-		update(permission); //no problem now
+				add(ADMIN).to(permission)
+		);
+		
+		permissionservice.update(with(permission)); //no problem now
 
 	}
+	
+	
+	@Test
+	public void DAs_can_assign_new_users_to_their_datasets() {
+
+		User user = aNewUser();
+		User anotherUser = aNewUser();	
+		DataSet dataset = aDataset();
+
+		login(user);
+		
+		try {
+		
+			assign(READ).to(groupOf(anotherUser)).over(dataset);
+			
+			fail();
+		}
+		catch(UnauthorizedApplicationException expected) {}
+		
+		
+		//promote to DA
+		
+		sudo(
+				()->assign(ADMIN).to(groupOf(user)).over(dataset)
+		);
+		
+		
+		assign(READ).to(groupOf(anotherUser)).over(dataset);
+		
+		
+		//still not on other datasets
+		
+		DataSet anotherDataset = aDatasetThat(otherThan(dataset));
+		
+		try {
+			
+			assign(READ).to(groupOf(anotherUser)).over(anotherDataset);
+			
+			fail();
+		}
+		catch(UnauthorizedApplicationException expected) {}
+
+	}
+
+	@Test
+	public void DAs_optionally_see_a_subset_of_users() {
+	
+		User caller = aNewUser();
+		User user1 = aNewUser();
+		User user2 = aNewUser();
+		
+		login(caller);
+		
+		List<UserDto> results = userapi.getAllUsers(false).getResults(); //no permissions
+		
+		assertTrue(includes(results, user1));
+		assertTrue(includes(results, user2));
+		
+		results = userapi.getAllUsers(true).getResults();  //with permissions, without privileges
+		
+		assertFalse(includes(results,user1));
+		assertFalse(includes(results,user2));
+		
+		DataSet dataset = aDataset();
+		
+		
+		sudo(() -> //promote caller to DA
+		
+			assign(ADMIN).to(groupOf(caller)).over(dataset)
+		);
+		
+		//assign user one to work on dataset
+		assign(READ).to(groupOf(user1)).over(dataset);	
+		
+		results = userapi.getAllUsers(true).getResults();
+		
+
+		assertTrue(includes(results,user1));
+		assertFalse(includes(results,user2));
+		
+	}
+	
+	
+	@Inject
+	GroupRest groupapi;
+	
+	@Test
+	public void DAs_see_a_subset_of_group_permissions() {
+		
+		User user = aNewUser();
+		Group group = groupOf(user);
+		DataSet dataset = aDataset();
+		
+		Permission permission = assign(READ).to(group).over(dataset);
+	
+		List<PermissionDto> results = groupapi.getPermissionByGrpId(group.getId()).getResults();
+		
+		assertTrue(includes(results, permission));
+		
+		login(user);
+		
+		results = groupapi.getPermissionByGrpId(group.getId()).getResults();
+		
+		assertTrue(results.isEmpty());
+		
+		sudo(() -> 
+		
+			add(ADMIN).to(permission)
+			
+		);
+	
+		results = groupapi.getPermissionByGrpId(group.getId()).getResults();
+		
+		assertTrue(includes(results, permission));
+		
+	}
+	
+	
+	/////////////////// conversion tables ////////////////////////////////////////////////////////
 	
 	@Test
 	public void dataset_admins_can_see_conversion_tables_defined_over_their_datasets() {
 		
-		List<ConversionTablesDto> tables = tableservice.getConversionTables().getResults();
+		List<ConversionTablesDto> tables = tableapi.getConversionTables().getResults();
 		
 		assertFalse(tables.isEmpty());
 		
@@ -153,15 +254,15 @@ public class DatasetAdmin extends LiveTest {
 		
 		login(user);
 		
-		tables = tableservice.getConversionTables().getResults();
+		tables = tableapi.getConversionTables().getResults();
 		
 		assertTrue(tables.isEmpty());
 		
-		assign(ADMIN).to(user).over(permission);
+		add(ADMIN).to(permission);
 		
 		//admin over source is NOT enough
 		
-		tables = tableservice.getConversionTables().getResults();
+		tables = tableapi.getConversionTables().getResults();
 		
 		assertTrue(tables.isEmpty());
 		
@@ -169,101 +270,11 @@ public class DatasetAdmin extends LiveTest {
 		
 		permission = aRegularPermissionOfaRegularGroupOver(table.targetDataset().getCode());
 		
-		assign(ADMIN).to(user).over(permission);
+		add(ADMIN).to(permission);
 		
-		tables = tableservice.getConversionTables().getResults();
+		tables = tableapi.getConversionTables().getResults();
 		
 		assertFalse(tables.isEmpty());
-	}
-	
-	
-	@Test
-	public void dataset_admins_can_assign_new_users_to_their_datasets() {
-
-		Permission permission = aRegularPermissionOfaRegularGroup();
-		
-		User user = aUserIn(permission.getGroup());
-
-		login(user);
-
-		assign(ADMIN).to(user).over(permission);
-		
-		PermissionFilter filter = basedOn(permission);
-		
-		filter.setSessionDescription("let's change the description to pass duplication checks");
-		
-		permissions.create(filter);
-
-		
-	}
-
-	@Test
-	public void dataset_admins_optionally_see_a_subset_of_users() {
-	
-		Permission permission = aRegularPermissionOfaRegularGroup();
-		
-		Group group = permission.getGroup();
-		
-		User user = aUserIn(group);
-		
-		login(user);
-		
-		List<UserDto> users = userservice.getAllUsers(false).getResults(); //no permissions
-		
-		assertFalse(users.isEmpty());
-		
-		users = userservice.getAllUsers(true).getResults();  //with permissions, without privileges
-		
-		assertTrue(users.isEmpty());
-		
-		assign(ADMIN).to(user).over(permission);
-		
-		users = userservice.getAllUsers(true).getResults();
-		
-		assertFalse(users.isEmpty()); //with permissions and privileges
-		
-		show(users,u->u.getUsername());
-		
-		//more than other live tests, this is an approximate test, which depends on db state.
-		//maing precise assertions against that state would required duplicating implementation logic.
- 	
-	}
-	
-	
-	@Inject
-	GroupRest groupservice;
-	
-	@Test
-	public void dataset_admins_see_a_subset_of_a_group_permissions() {
-	
-		Permission permission = aRegularPermissionOfaRegularGroup();
-		
-		Group group = permission.getGroup();
-		
-		List<PermissionDto> perms = groupservice.getPermissionByGrpId(group.getId()).getResults();
-		
-		assertFalse(perms.isEmpty());
-		
-		User user = aUserIn(group);
-		
-		login(user);
-		
-		perms = groupservice.getPermissionByGrpId(group.getId()).getResults();
-		
-		assertTrue(perms.isEmpty());
-		
-		assign(ADMIN).to(user).over(permission);
-		
-		perms = groupservice.getPermissionByGrpId(group.getId()).getResults();
-		
-		assertFalse(perms.isEmpty());
-		
-		Optional<PermissionDto> dtoForInitialPermission =  perms.stream().filter(p->p.getId().equals(permission.getId())).findFirst();
-				
-		assertTrue(dtoForInitialPermission.isPresent());
-		
-		assertTrue(dtoForInitialPermission.get().isAdmin());
-		
 	}
 
 	
@@ -301,7 +312,7 @@ public class DatasetAdmin extends LiveTest {
 		
 		assertTrue(moduleService.getComputationModules(true).getResults().isEmpty());
 		
-		assign(ADMIN).to(user).over(permission);
+		add(ADMIN).to(permission);
 		
 		moduleService.getComputationModules(true)
 									.getResults()
@@ -332,7 +343,7 @@ public class DatasetAdmin extends LiveTest {
 	@Test
 	public void dataset_admins_can_see_executions_defined_over_their_datasets() {
 		
-		User user = users.getUser("faodomain/simeoni");
+		User user = userservice.getUser("faodomain/simeoni");
 		
 		login(user);
 		
@@ -347,7 +358,7 @@ public class DatasetAdmin extends LiveTest {
 	@Test
 	public void download_module() {
 		
-		User user = users.getUser("faodomain/simeoni");
+		User user = userservice.getUser("faodomain/simeoni");
 		
 		login(user);
 		
@@ -360,13 +371,13 @@ public class DatasetAdmin extends LiveTest {
 	@Test
 	public void dataset_admins_can_see_their_conversion_tables() {
 		
-		User user = users.getUser("faodomain/simeoni");
+		User user = userservice.getUser("faodomain/simeoni");
 		
 		login(user);
 		
 		List<ConversionTablesDto> dtos = tableService.getAllConversionTablesCodes().getResults();
 		
-		show(dtos,t->t.getConversionTableCode());
+		show(all(dtos),t->t.getConversionTableCode());
 		
 		
 	}
@@ -386,11 +397,11 @@ public class DatasetAdmin extends LiveTest {
 		
 		List<ComputationModulePermissionDto> permissions = moduleService.getPermissions(module.getId()).getResults();
 		
-		show(permissions,p->p.getId());
+		show(all(permissions),p->p.getId());
 		
 		assertTrue(permissions.isEmpty());
 		
-		assign(ADMIN).to(user).over(permission);
+		add(ADMIN).to(permission);
 		
 		permissions = moduleService.getPermissions(module.getId()).getResults();
 		
@@ -420,7 +431,7 @@ public class DatasetAdmin extends LiveTest {
 		
 		assertTrue(scheduledcomputations.findAllComputationScheduledPermitted().isEmpty());
 		
-		assign(ADMIN).to(user).over(permission);
+		add(ADMIN).to(permission);
 		
 		assertFalse(scheduledcomputations.findAllComputationScheduledPermitted().isEmpty());
 		
@@ -434,7 +445,7 @@ public class DatasetAdmin extends LiveTest {
 		
 		List<ComputationModuleDto> history = moduleService.getComputationModules(module.getName(),module.isCoreScript()).getResults();
 		
-		show(history, c->c.getStart());
+		show(all(history), c->c.getStart());
 		
 		assertFalse(history.isEmpty());
 		
@@ -448,7 +459,7 @@ public class DatasetAdmin extends LiveTest {
 		
 		assertTrue(history.isEmpty());
 		
-		assign(ADMIN).to(user).over(permission);
+		add(ADMIN).to(permission);
 		
 		history = moduleService.getComputationModules(aModule().getName(),aModule().isCoreScript()).getResults();
 		
@@ -480,7 +491,7 @@ public class DatasetAdmin extends LiveTest {
 		}
 		catch(UnauthorizedApplicationException gottahappen){}
 		
-		assign(ADMIN).to(user).over(permission);
+		add(ADMIN).to(permission);
 		
 		observations.rollbackBeforeComputationExecution(execution, true);
 	}
@@ -500,6 +511,14 @@ public class DatasetAdmin extends LiveTest {
 	}
 	
 	
-
+	private boolean includes(List<UserDto> users,User user) {
+		return all(users.stream().map(dto->dto.getId())).contains(user.getId());
+	}
+	
+	private boolean includes(List<PermissionDto> permissions,Permission permission) {
+		return all(permissions.stream().map(dto->dto.getId())).contains(permission.getId());
+	}
+	
+	
 	
 }

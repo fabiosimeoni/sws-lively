@@ -1,103 +1,202 @@
 package org.fao.sws.lively.modules;
 
 import static java.util.Arrays.*;
+import static java.util.UUID.*;
 
+import java.util.HashSet;
+import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.enterprise.event.Observes;
 
+import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
 import org.fao.sws.domain.operational.Privilege;
 import org.fao.sws.domain.plain.operational.Group;
 import org.fao.sws.domain.plain.operational.Permission;
 import org.fao.sws.domain.plain.operational.User;
+import org.fao.sws.domain.plain.reference.DataSet;
 import org.fao.sws.ejb.GroupService;
 import org.fao.sws.ejb.PermissionService;
 import org.fao.sws.ejb.UserService;
 import org.fao.sws.lively.LiveTest;
 import org.fao.sws.lively.core.SecurityContext;
+import org.fao.sws.model.dao.PermissionDao;
 import org.fao.sws.model.filter.PermissionFilter;
 
 @UtilityClass
 public class Users extends Common {
 	
-	void startup(@Observes LiveTest.Start e, GroupService groups, UserService users, PermissionService permissions) {
+	void startup(@Observes LiveTest.Start e, GroupService groups, UserService users, PermissionService permissions, PermissionDao permissionsdao) {
 		
-		Users.groups = groups;
-		Users.users=users;
-		Users.permissions=permissions;
+		Users.groupservice = groups;
+		Users.userservice=users;
+		Users.permissionservice=permissions;
+		Users.permissiondao = permissionsdao;
 	}
 	
 	
 	////////////// groups //////////////////////////////////////////////////////////////////////
 	
-	public GroupService groups;
+	public GroupService groupservice;
 	
 	
-	public Predicate<Group> isAdminGroup = g -> g.isAdministrator();
+	public boolean ofAdmins = true;
+	public Predicate<Group> isAdmin = g -> g.isAdministrator();
+	public Predicate<Group> isRegular = isAdmin.negate();
+	public Predicate<Group> isCalled(String n) { return g->g.getName().equals(n);}
 	
-	public Predicate<Group> isRegularGroup = isAdminGroup.negate();
+	//one
 	
-	
-	
-	public Stream<Group> groups() {
+	public Group group(Long id) {
 		
-		return groups.getAllGroups(true).stream();
+		return groupservice.getGroup(id);
 	}
 	
-	public Stream<Group> adminGroups() {
-		
-		return groups().filter(isAdminGroup);
+	public Group group(String n) {
+	
+		return aGroupThat(isCalled(n));
 	}
 	
-	public Stream<Group> regularGroups() {
+	public Group groupOf(User user) {
 		
-		return groups().filter(isRegularGroup);
+		return group(user.getUsername());
+	}
+
+	public Group aGroupThat(Predicate<Group> filter) {
+		
+		return oneof(allGroupsThat(filter));
 	}
 	
 	public Group anAdminGroup() {
 		
-		return aGroupThat(isAdminGroup);
+		return aGroupThat(isAdmin);
 	}
 	
 	public Group aRegularGroup() {
 		
-		return aGroupThat(isRegularGroup);
+		return aGroupThat(isRegular);
 	}
 	
-	public Group aGroupThat(Predicate<Group> filter) {
+	//many
+	
+	public Stream<Group> groups() {
 		
-		return oneof(groups().filter(filter));
+		return groupservice.getAllGroups(true).stream();
+	}
+	
+	public Stream<Group> allGroupsThat(Predicate<Group> filter) {
+		
+		return groups().filter(filter);
+	}
+	
+	public Stream<Group> adminGroups() {
+		
+		return allGroupsThat(isAdmin);
+	}
+	
+	public Stream<Group> regularGroups() {
+		
+		return allGroupsThat(isRegular);
+	}
+	
+	//create
+	
+	public Group aNewGroup() {
+		
+		return aNewGroup(false);
+	}
+
+	public Group aNewGroup(boolean isadmin) {
+		
+		String name = "testgroup-"+randomUUID();
+		
+		return groupservice.create(new Group(null, name, name+" (test group)", true, isadmin, false));
 	}
 	
 	public Stream<Group> groupsOf(User user) {
-		return groups.getGroupsByUserId(user.getId()).stream();
+		return groupservice.getGroupsByUserId(user.getId()).stream();
 	}
+	
 	
 	
 	//////////////// users /////////////////////////////////////////////////////
 	
-	public UserService users;
+	public UserService userservice;
 	
-	public Predicate<User> isAdminUser = u -> groupsOf(u).filter(isAdminGroup).findFirst().isPresent();
+	public Predicate<User> isAdminUser = u -> groupsOf(u).filter(isAdmin).findFirst().isPresent();
 	
 	public Predicate<User> isRegularUser = isAdminUser.negate();
 	
-	
-	
-	public Stream<User> users() {
-		
-		return users.getAllUsers().stream();
-
-	}
+	//one
 	
 	public User aUserThat(Predicate<User> filter) {
 		
 		return oneof(users().filter(filter));
 
 	}
+
+	public User user(Long id) {
+		return userservice.getUser(id);
+	}
+	
+	public User user(String name) {
+		//double lookup as getUser(name) does not return groups...
+		return userservice.getUser(userservice.getUser(name).getId());
+	}
+
+	
+	public User aUserIn(Group group) {
+		
+		return oneof(usersIn(group));
+	}
+	
+	
+	public User anAdmin() {
+		
+		return aUserIn(anAdminGroup());
+
+	}
+	
+	public User aRegularUser() {
+		
+		return oneof(regularUsers());
+
+	}
+	
+	public User aUserWith(Permission permission) {
+		
+		return oneof(usersIn(permission.getGroup()));
+
+	}
+	
+	
+	public ToClause<Group,Void> join(User user) {
+		
+		return g-> {
+			groupservice.addUser(user.getId(),g.getId());
+			return null;
+		};
+		
+	}
+	
+	
+	// many
+	
+	public Stream<User> users() {
+		
+		return userservice.getAllUsers().stream();
+
+	}
+	
+	
+	public Stream<User> allUsersThat(Predicate<User> filter) {
+		
+		return users().filter(filter);
+	}
+
 	
 	public Stream<User> admins() {
 		
@@ -108,36 +207,33 @@ public class Users extends Common {
 		
 		return users().filter(isRegularUser);
 	}
-
+	
 	public Stream<User> usersIn(Group group) {
 		
-		return users.getUsersByGrpId(group.getId()).stream();
+		return userservice.getUsersByGrpId(group.getId()).stream();
 
 	}
 	
-	public User aUserIn(Group group) {
-		
-		return oneof(usersIn(group));
+	//create
+	
 
+	public User aNewUser() {
+		
+		//automtically added to same-name group
+		return userservice.create(new User(null,"testuser-"+randomUUID(),true));
 	}
 	
-	public User aUserWith(Permission permission) {
+	public User aNewUserIn(Group group) {
 		
-		return oneof(usersIn(permission.getGroup()));
-
+		User user = userservice.create(new User(null,"testuser-"+randomUUID(),true));
+		join(user).to(group);
+		return user;
 	}
 	
-	public User anAdmin() {
-		
-		return aUserIn(anAdminGroup()); //faster than oneof(admins());
-
-	}
 	
-	public User aRegularUser() {
-		
-		return oneof(regularUsers());
 
-	}
+	
+
 	
 	/////// login/out ///////////////////////////////////////////////////////////////////////
 	
@@ -152,7 +248,7 @@ public class Users extends Common {
 		
 		currentuser = user;
 		
-		sctx = new SecurityContext(currentuser,groups);
+		sctx = new SecurityContext(currentuser,groupservice);
 		sctx.bind();
 	}
 	
@@ -162,19 +258,31 @@ public class Users extends Common {
 			sctx.remove();
 	}
 	
-	public void sudo(User user, Runnable task) {
+	@SneakyThrows
+	public <T> T sudo(Callable<T> task) {
 		
+		User previoususer = currentuser;
+		
+		if (groupsOf(currentuser).filter(isAdmin).findFirst().isPresent())
+			return task.call();
+
 		login(anAdmin());
 		
-		task.run();
+		T t = task.call();
+			
+		login(previoususer);
 		
-		login(user); //relog user
+		return t;
+		
 	}
 	
 
 	////////////// permissions //////////////////////////////////////////////////////////////////////
 
-	public PermissionService permissions;
+	
+	public PermissionService permissionservice;
+	public PermissionDao permissiondao;
+	
 	
 	public Predicate<Permission> withPrivileges(Privilege ... privileges) {
 		return p -> p.getPrivileges().containsAll(asList(privileges));
@@ -189,9 +297,12 @@ public class Users extends Common {
 	}
 	
 	
+	public Permission permission(Long id) {
+		return permissionservice.getPermission(id);
+	}
 	
 	public Stream<Permission> permissionsOf(Group g) {
-		return permissions.getPermissionByGrpId(g.getId()).stream();
+		return permissionservice.getPermissionByGrpId(g.getId()).stream();
 	}
 
 	public Stream<Permission> permissionsOf(Stream<Group> groups) {
@@ -204,62 +315,57 @@ public class Users extends Common {
 		PermissionFilter filter = new PermissionFilter();
 		filter.setDataSetCode(datasetname);
 		
-		return 	permissions.getGroupsPermission(filter).stream();
+		return 	permissionservice.getGroupsPermission(filter).stream();
 	}
 	
-	public void update(Permission permission) {
-		
-		permissions.update(basedOn(permission));
-	}
+
 	
-	
-	public ToClause assign(Privilege ... privileges) {
+	public ToClause<Group,OverClause<DataSet,Permission>> assign(Privilege ... privileges) {
 		
-		return u -> p -> {
-			
-			sudo(u, ()-> {
+		return g -> ds -> {
+		
+				Permission perm = new Permission(null,ds, ds.getName()+"-permission-"+randomUUID());
 				
+				perm.setGroup(g);
+				
+				perm.setPrivileges(new HashSet<>(asList(privileges)));
+				
+				//creates, reloads, and returns
+				return permission(permissionservice.create(with(perm)).getId());
+				
+				
+			};
+
+	}; 
+	
+	public ToClause<Permission,Permission> add(Privilege ... privileges) {
+		
+		return p -> {
+		
 				p.getPrivileges().addAll(asList(privileges));
 				
-				update(p);
+				//change and reload
+				return permission(permissionservice.update(with(p)).getId());
 				
-			});
-		}; 
-	}
+			};
+
+	}; 
 	
-	public FromClause revoke(Privilege ... privileges) {
+	public FromClause<Permission,Permission> revoke(Privilege ... privileges) {
 		
-		return u -> p -> {
-			
-			sudo(u, ()-> {
+		return p -> {
 				
 				p.getPrivileges().removeAll(asList(privileges));
 				
-				update(p);
+				//change and reload
+				return permission(permissionservice.update(with(p)).getId());
 				
-			});
-			
-		}; 
+			};
+
 	}
 
-	public static interface OverClause {
-		
-		void over(Permission permission);
-	}
 	
-	public interface ToClause {
-		
-
-		OverClause to(User user);
-	}
-	
-	public interface FromClause {
-		
-
-		OverClause from(User user);
-	}
-	
-	public PermissionFilter basedOn(Permission p) {
+	public PermissionFilter with(Permission p) {
 		
 		//hard to believe...
 		
@@ -283,6 +389,14 @@ public class Users extends Common {
 	
 	public Permission reload(Permission p) {
 		
-		 return permissions.getPermission(p.getId());
+		 return permissionservice.getPermission(p.getId());
 	}
+	
+	
+//	private PermissionFilter permissionFilter(String name, Privilege ...privileges) {
+//		
+//		DataSetConfiguration set = configuration.dataSet(name);
+//		
+//		
+//	}
 }

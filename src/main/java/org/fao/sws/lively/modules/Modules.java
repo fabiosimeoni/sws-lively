@@ -20,14 +20,16 @@ public class Modules extends Common {
 	
 	void startup(@Observes LiveTest.Start e, ComputationModuleService modules, ComputationScheduledService scheduled) {
 		
-		Modules.computations = scheduled;
-		Modules.modules=modules;
+		Modules.scheduledservice = scheduled;
+		Modules.moduleservice=modules;
 	}
 	
 	
-	public ComputationScheduledService computations;
+	public ComputationScheduledService scheduledservice;
 	
-	public ComputationModuleService modules;
+	public ComputationModuleService moduleservice;
+	
+	
 	
 	public String mainDatasetOf(ComputationModule module) {
 		return module.getMetadata().getDatasets().getMainDatasetsList().get(0).getCode();
@@ -39,7 +41,7 @@ public class Modules extends Common {
 	
 	
 	public Stream<ComputationModule> modules() {
-		return modules.search(new ComputationModuleFilter()).stream();
+		return moduleservice.search(new ComputationModuleFilter()).stream();
 	}
 	
 	public ComputationModule aModule() {
@@ -49,7 +51,7 @@ public class Modules extends Common {
 	
 	public Stream<ComputationModule> historyOf(ComputationModule module) {
 		
-		return modules.search(new ComputationModuleFilter()
+		return moduleservice.search(new ComputationModuleFilter()
 							.setName(module.getName())
 							.setIsWithHistory(true)
 							.setCore(module.isCoreScript())).stream();
@@ -67,7 +69,7 @@ public class Modules extends Common {
 	
 	public ComputationScheduled schedule(ComputationModule module) {
 		
-		return computations.create(module, new ComputationScheduledParameters(), module.getOwner().getId());
+		return scheduledservice.create(module, new ComputationScheduledParameters(), module.getOwner().getId());
 	}
 
 }

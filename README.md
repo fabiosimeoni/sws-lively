@@ -24,6 +24,7 @@ In each `@Test` you can use:
 * a set of thematic _modules_ that you can `star`-import to easily and clearly articulate your tests.
 * e.g. `star`-import `Users` to work with users, groups, and permissions.
 * e.g. `star`-import `Modules` to work with R-modules. 
+* e.g. `star`-import `Configuration` to work with datasets, domains, and other config elements. 
 * etc.
  
 Enrich existing modules and create new modules as you add more tests. 
