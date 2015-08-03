@@ -12,13 +12,13 @@ import org.fao.sws.domain.plain.operational.ComputationScheduled;
 import org.fao.sws.domain.plain.operational.ComputationScheduled.ComputationScheduledParameters;
 import org.fao.sws.ejb.ComputationModuleService;
 import org.fao.sws.ejb.ComputationScheduledService;
-import org.fao.sws.lively.LiveTest;
+import org.fao.sws.lively.SwsTest.Start;
 import org.fao.sws.model.filter.ComputationModuleFilter;
 
 @UtilityClass
 public class Modules extends Common {
 	
-	void startup(@Observes LiveTest.Start e, ComputationModuleService modules, ComputationScheduledService scheduled) {
+	void startup(@Observes Start e, ComputationModuleService modules, ComputationScheduledService scheduled) {
 		
 		Modules.scheduledservice = scheduled;
 		Modules.moduleservice=modules;
@@ -41,12 +41,12 @@ public class Modules extends Common {
 	
 	
 	public Stream<ComputationModule> modules() {
-		return moduleservice.search(new ComputationModuleFilter()).stream();
+		return shuffle(moduleservice.search(new ComputationModuleFilter()));
 	}
 	
 	public ComputationModule aModule() {
 		
-		return oneof(modules());
+		return aModuleThat($->true); //dry
 	}
 	
 	public Stream<ComputationModule> historyOf(ComputationModule module) {
@@ -59,7 +59,9 @@ public class Modules extends Common {
 	
 	public ComputationModule aModuleThat(Predicate<ComputationModule> filter) {
 		
-		return oneof(modules().filter(filter));
+		ComputationModule module = oneof(modules().filter(filter));
+		log.info("module {} by {}",module.getName(), module.getOwner().getUsername());
+		return module;
 	}
 	
 	public ComputationModule aModuleOver(String dataset) {

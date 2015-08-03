@@ -12,7 +12,7 @@ import lombok.experimental.ExtensionMethod;
 
 import org.fao.sws.ejb.DimensionService;
 import org.fao.sws.ejb.QuestionnairesService;
-import org.fao.sws.lively.LiveTest;
+import org.fao.sws.lively.SwsTest;
 import org.fao.sws.lively.core.Extensions;
 import org.fao.sws.model.config.questionnaire.QuestionnaireConfiguration;
 import org.fao.sws.model.config.questionnaire.QuestionnairesConfiguration;
@@ -26,7 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 @ExtensionMethod(Extensions.class)
-public class BlockMetadataColumns extends LiveTest {
+public class BlockMetadataColumns extends SwsTest {
 
 	QuestionnairesConfiguration questionnaires = new QuestionnairesConfiguration();
 	QuestionnaireConfiguration questionnaire;

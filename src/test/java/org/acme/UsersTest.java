@@ -9,10 +9,10 @@ import static org.junit.Assert.*;
 import org.fao.sws.domain.plain.operational.Group;
 import org.fao.sws.domain.plain.operational.Permission;
 import org.fao.sws.domain.plain.operational.User;
-import org.fao.sws.lively.LiveTest;
+import org.fao.sws.lively.SwsTest;
 import org.junit.Test;
 
-public class UsersTest extends LiveTest {
+public class UsersTest extends SwsTest {
 
 	@Test
 	public void group_support() {

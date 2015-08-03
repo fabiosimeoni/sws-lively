@@ -21,7 +21,7 @@ import org.fao.sws.domain.plain.reference.DataSet;
 import org.fao.sws.ejb.GroupService;
 import org.fao.sws.ejb.PermissionService;
 import org.fao.sws.ejb.UserService;
-import org.fao.sws.lively.LiveTest;
+import org.fao.sws.lively.SwsTest.Start;
 import org.fao.sws.lively.core.SecurityContext;
 import org.fao.sws.model.dao.PermissionDao;
 import org.fao.sws.model.filter.PermissionFilter;
@@ -29,7 +29,12 @@ import org.fao.sws.model.filter.PermissionFilter;
 @UtilityClass
 public class Users extends Common {
 	
-	void startup(@Observes LiveTest.Start e, GroupService groups, UserService users, PermissionService permissions, PermissionDao permissionsdao) {
+	void startup(@Observes Start e, 
+			
+									GroupService groups, 
+									UserService users, 
+									PermissionService permissions, 
+									PermissionDao permissionsdao) {
 		
 		Users.groupservice = groups;
 		Users.userservice=users;
@@ -71,19 +76,18 @@ public class Users extends Common {
 	}
 	
 	public Group anAdminGroup() {
-		
-		return aGroupThat(isAdmin);
+		//single-user makes sure groupOf() works
+		return aGroupThat(isAdmin.and(g->g.isSingleUser()));
 	}
 	
 	public Group aRegularGroup() {
-		
-		return aGroupThat(isRegular);
+		//single-user makes sure groupOf() works
+		return aGroupThat(isRegular.and(g->g.isSingleUser()));
 	}
 	
 	//many
 	
 	public Stream<Group> groups() {
-		
 		return groupservice.getAllGroups(true).stream();
 	}
 	
@@ -128,7 +132,7 @@ public class Users extends Common {
 	
 	public Predicate<User> isAdminUser = u -> groupsOf(u).filter(isAdmin).findFirst().isPresent();
 	
-	public Predicate<User> isRegularUser = isAdminUser.negate();
+	public Predicate<User> isRegularUser = u->groupsOf(u).filter(isAdmin.negate()).findFirst().isPresent();
 	
 	//one
 	
@@ -187,7 +191,7 @@ public class Users extends Common {
 	
 	public Stream<User> users() {
 		
-		return userservice.getAllUsers().stream();
+		return shuffle(userservice.getAllUsers());
 
 	}
 	
@@ -240,7 +244,7 @@ public class Users extends Common {
 
 	SecurityContext sctx;
 	
-	User currentuser;
+	public User currentuser;
 	
 	public void login(User user) {
 		
@@ -258,6 +262,9 @@ public class Users extends Common {
 			sctx.remove();
 	}
 	
+	/**
+	 * Performs an action with administrator privileges.
+	 */
 	@SneakyThrows
 	public <T> T sudo(Callable<T> task) {
 		
@@ -273,6 +280,19 @@ public class Users extends Common {
 		login(previoususer);
 		
 		return t;
+		
+	}
+	
+	/**
+	 * Performs an action with administrator privileges.
+	 */
+	public void sudo(Runnable task) {
+		
+		//adapts to callabale
+		sudo(()->{
+			task.run();
+			return null;
+		});
 		
 	}
 	

@@ -22,7 +22,7 @@ import org.fao.sws.domain.r.jaxb.MainDataset;
 import org.fao.sws.ejb.ObservationService;
 import org.fao.sws.ejb.dto.ComputationModuleDto;
 import org.fao.sws.ejb.security.UnauthorizedApplicationException;
-import org.fao.sws.lively.LiveTest;
+import org.fao.sws.lively.SwsTest;
 import org.fao.sws.model.config.ConversionTableConfiguration;
 import org.fao.sws.model.config.DatabaseConfiguration;
 import org.fao.sws.model.dao.ComputationExecutionDao;
@@ -45,7 +45,7 @@ import org.junit.Test;
  * This could either be a new type/level of user permissions, or an extension to the existing administrator user configuration.
  * https://jira.fao.org/ciok/browse/SWS-947
  */
-public class DatasetAdmin extends LiveTest {
+public class DatasetAdmin extends SwsTest {
 	
 	@Inject
 	UserRest userapi;
@@ -149,7 +149,7 @@ public class DatasetAdmin extends LiveTest {
 		
 		//still not on other datasets
 		
-		DataSet anotherDataset = aDatasetThat(otherThan(dataset));
+		DataSet anotherDataset = aDatasetThat(isOtherThan(dataset));
 		
 		try {
 			

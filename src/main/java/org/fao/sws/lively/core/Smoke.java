@@ -9,14 +9,14 @@ import javax.inject.Inject;
 import lombok.SneakyThrows;
 
 import org.fao.sws.domain.plain.reference.DimensionValue;
-import org.fao.sws.lively.LiveTest;
+import org.fao.sws.lively.SwsTest;
 import org.fao.sws.model.config.DatabaseConfiguration;
 import org.fao.sws.model.config.questionnaire.QuestionnairesConfiguration;
 import org.fao.sws.model.dao.DimensionDao;
 import org.fao.sws.model.filter.DimensionFilter;
 import org.junit.Test;
 
-public class Smoke extends LiveTest {
+public class Smoke extends SwsTest {
 
 	@Inject
 	DatabaseConfiguration config;
