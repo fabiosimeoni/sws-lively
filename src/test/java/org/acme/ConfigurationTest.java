@@ -1,6 +1,5 @@
 package org.acme;
 
-import static org.fao.sws.lively.modules.Common.*;
 import static org.fao.sws.lively.modules.Configuration.*;
 
 import java.util.stream.Stream;
@@ -10,9 +9,10 @@ import org.fao.sws.domain.plain.reference.DimensionValue;
 import org.fao.sws.lively.SwsTest;
 import org.fao.sws.model.config.DataSetConfiguration;
 import org.fao.sws.model.config.DimensionConfiguration;
+import org.fao.sws.model.config.FlagConfiguration;
 import org.junit.Test;
 
-public class ConfiguratiionTest extends SwsTest {
+public class ConfigurationTest extends SwsTest {
 	
 	
 	@Test
@@ -58,6 +58,29 @@ public class ConfiguratiionTest extends SwsTest {
 		
 		//codes of leaf values
 		show(values.filter(leaves),dimcodes);
+		
+
+	}
+	
+	@Test
+	public void flag_support() {
+	
+		//all dimensions
+		
+		log.info("{} flags.", flags().count());
+		
+		//some dimension
+		FlagConfiguration flag = aFlag();
+		
+		//a given dimension
+		FlagConfiguration anotherFlag = flag(flag.getCode()); 
+		
+		assertEquals(anotherFlag,flag);
+		
+		//values
+		Stream<String> values = valuesOf(flag);
+		
+		show(values);
 		
 
 	}

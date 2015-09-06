@@ -2,7 +2,7 @@ package org.fao.sws.lively.core;
 
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.*;
-import static org.fao.sws.lively.modules.Common.*;
+import static org.fao.sws.lively.modules.DomainModule.*;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

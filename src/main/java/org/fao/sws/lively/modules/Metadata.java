@@ -1,5 +1,7 @@
 package org.fao.sws.lively.modules;
 
+import static org.fao.sws.lively.modules.Common.*;
+
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -15,7 +17,7 @@ import org.fao.sws.ejb.MetadataTypeService;
 import org.fao.sws.lively.SwsTest.Start;
 
 @UtilityClass
-public class Metadata extends Common {
+public class Metadata {
 		
 		void startup(@Observes Start e, 
 				

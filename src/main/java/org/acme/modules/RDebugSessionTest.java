@@ -1,10 +1,8 @@
 package org.acme.modules;
 
 import static java.util.Collections.*;
-import static org.fao.sws.lively.modules.Common.*;
 import static org.fao.sws.lively.modules.Configuration.*;
-import static org.fao.sws.lively.modules.Modules.*;
-import static org.fao.sws.lively.modules.Sessions.*;
+import static org.fao.sws.lively.modules.Scripts.*;
 import static org.fao.sws.lively.modules.Users.*;
 import static org.junit.Assert.*;
 
@@ -23,6 +21,7 @@ import org.fao.sws.domain.plain.operational.User;
 import org.fao.sws.domain.plain.reference.DataSet;
 import org.fao.sws.ejb.data.DataRequestDto;
 import org.fao.sws.lively.SwsTest;
+import org.fao.sws.lively.modules.Sessions;
 import org.fao.sws.model.dao.ComputationExecutionDao;
 import org.fao.sws.web.dto.ComputationExecutionRequestDto;
 import org.fao.sws.web.dto.ComputationExecutionWithParametersDto;
@@ -208,7 +207,7 @@ public class RDebugSessionTest extends SwsTest {
 			//to run over this subset of the dataseta
 			Map<String,List<String>> cube = new HashMap<>();
 			
-			EditingSession session = aNewSession().over(dataset);
+			EditingSession session = Sessions.aNewSession().over(dataset);
 			
 			session.getDimension2ids().forEach((k,v)-> cube.put(k, all(all(v).map(id->id.toString()))));
 			

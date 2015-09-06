@@ -32,7 +32,7 @@ public class SecurityContext {
 		
 		SimpleSession session = new SimpleSession();
 		session.setExpired(false);
-		session.setAttribute(SWSAccount.SESSION_KEY, new TestAccount(new BatchAccount(user,false),service));;
+		session.setAttribute(SWSAccount.ACCOUNT_KEY, new TestAccount(new BatchAccount(user,false),service));;
 		 
 		return new Subject.Builder()
 			.authenticated(true)

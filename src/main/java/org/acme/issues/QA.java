@@ -1,7 +1,6 @@
 package org.acme.issues;
 
 import static org.fao.sws.lively.core.Database.Source.*;
-import static org.fao.sws.lively.modules.Common.*;
 import static org.fao.sws.lively.modules.Users.*;
 
 import java.io.IOException;
@@ -14,7 +13,6 @@ import javax.ws.rs.core.StreamingOutput;
 
 import lombok.SneakyThrows;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.fao.sws.ejb.data.DataRequestDto;
 import org.fao.sws.lively.SwsTest;
 import org.fao.sws.lively.core.Database;
@@ -24,6 +22,8 @@ import org.fao.sws.web.dto.ResponseWrapperSingleObj;
 import org.fao.sws.web.rest.r.RComputationParameters;
 import org.fao.sws.web.rest.r.RDataRest;
 import org.junit.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * These tests run against the data in QA with local configuration.

@@ -25,42 +25,33 @@ import lombok.Cleanup;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
-import org.fao.sws.domain.Persistable;
+import org.fao.sws.domain.plain.traits.Persistable;
 import org.fao.sws.model.config.Describable;
 import org.fao.sws.web.dto.ResponseWrapperSingleObj;
 import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * General-purpose facilities available to tests upon importing some domain module. 
+ * A potpourri of general-purpose idioms available for static import. 
  */
-//inheritance is artificial but convenient. prevents use of @Utilityclass though.
-public abstract class Common {
-	
-	/** shared logger.
-	 * <p>
-	 * (this is mostly intended for domain modules, test output stands out better with {@link Common#show()} or {@link System#out}).*/ 
-	public static Logger log = LoggerFactory.getLogger("test");
+public class Common extends DomainModule {
 	
 	
-	/** a <code>true</code> alias with gusto. */
+	
+	/** a <code>true</code> alias, with gusto. */
 	public static boolean yep = true;
 	
-	/** a <code>true</code> alias with gusto. */
-	public static boolean nope = true;
-	
-	
-	/** the mama config. */
-	//public static DatabaseConfiguration configuration;
+	/** a <code>false</code> alias, with gusto. */
+	public static boolean nope = false;
 	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	/** pulls out those identifiers. */
 	public static Function<Persistable,Long> ids = p->p.getId();  
+	
 	/** pulls out those codes. */
 	public static Function<Describable,String> codes = d->d.getCode();
+	
 	
 	/** shows it. */
 	public static <T> void show(Object text) { //just for consistency and looks.
@@ -68,23 +59,23 @@ public abstract class Common {
 		System.out.println(text);
 	}
 
-	/** shows all the elements. */
+	/** shows them. */
 	public static <T> void show(@NonNull Stream<T> stream) {	
 		show(stream, Function.identity());
 	}
 	
-	/** shows the interesting bits of all the elements,*/
+	/** shows the interesting bits.*/
 	public static <T> void show(@NonNull Stream<T> stream, @NonNull Function<? super T,?> mapfunc) {
 		System.out.println(format("total=%s",stream.map(mapfunc).peek(e->System.out.println(e)).count()));
 	}
 	
 	
-	/** the identifiers of the elements. */
+	/** extracts identifiers. */
 	public static <T extends Persistable> Stream<Long> idsOf(@NonNull Stream<T> identifiables) {
 		return identifiables.map(ids);
 	}
 
-	/** the codes of the elements. */
+	/** extracts codes. */
 	public static <T  extends Describable> Stream<String> codesOf(@NonNull Stream<T> describables) {
 		return describables.map(codes);
 	}
@@ -101,9 +92,9 @@ public abstract class Common {
 	/** dedups, based on codes. */
 	public static <T extends Describable> Stream<T> distinct(@NonNull Stream<T> describables) {
 		
-		List<String> names = new ArrayList<String>();
+		List<String> codes = new ArrayList<String>();
 		
-		return describables.filter(d->!names.contains(d.getCode())).peek(d->names.add(d.getCode()));
+		return describables.filter(d->!codes.contains(d.getCode())).peek(d->codes.add(d.getCode()));
 	}
 	
 	/** extracts any element, except that very one. */
@@ -237,6 +228,11 @@ public abstract class Common {
 		Assert.assertEquals(message,t1.getId(), t2.getId());
 	}
 	
+	//helps with static imports from subclass
+	public static void assertEquals(@NonNull String message, @NonNull Object t1, @NonNull Object t2) {
+		Assert.assertEquals(message,t1, t2);
+	}
+	
 	/** like junit's, uses identifiers. */
 	public static void assertEquals(@NonNull Persistable t1, @NonNull Persistable t2) {
 		Assert.assertEquals(t1.getId(), t2.getId());
@@ -254,7 +250,13 @@ public abstract class Common {
 	
 	/** like junit's, says it clearly for a stream. */
 	public static void assertThereAreNo(@NonNull String message, @NonNull Stream<?> t) {
+		
 		assertTrue(message,t.count()==0);
+	}
+	
+	//helps with static imports from subclass
+	public static void assertEquals(@NonNull Object t1, @NonNull Object t2) {
+		Assert.assertEquals(t1, t2);
 	}
 	
 	/** like junit's, says it clearly for a stream. */
@@ -275,48 +277,6 @@ public abstract class Common {
 	/** like junit's, says it clearly for a stream. */
 	public static void assertThereAre(Stream<?> t) {
 		assertTrue(t.count()>0);
-	}
-	
-	
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	// general clauses to encourage sentence-based APIs
-	//(sacrifices documentation to the altar of reuse)
-
-	public static interface ToClause<T,S> { 
-		
-		S to(T t);
-	}
-	
-	public static interface OverClause<T,S> {
-		
-		S over(T t);
-	}
-	
-	public interface FromClause<T,S> {
-	
-		S from(T t);
-	}
-	
-	public interface WithClause<T,S> {
-		
-		S with(T t);
-	}
-	
-	public interface AtClause<T,S> {
-		
-		S at(T t);
-	}
-	
-	public interface InClause<T,S> {
-		
-		S in(T t);
-	}
-	
-	public interface ExceptClause<T,S> {
-		
-		S except(T t);
-		
 	}
 	
 	

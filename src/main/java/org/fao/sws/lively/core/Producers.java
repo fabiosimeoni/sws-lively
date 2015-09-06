@@ -1,10 +1,10 @@
 package org.fao.sws.lively.core;
 
 import static org.fao.sws.lively.core.Database.Source.*;
-import static org.fao.sws.web.cdi.VisualizationType.Type.*;
 
 import javax.annotation.Resource;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Produces;
 import javax.jms.ConnectionFactory;
 import javax.jms.DeliveryMode;
@@ -14,11 +14,11 @@ import javax.sql.DataSource;
 import lombok.SneakyThrows;
 
 import org.fao.sws.domain.plain.operational.EditingSession;
+import org.fao.sws.domain.plain.operational.Tag;
 import org.fao.sws.ejb.DimensionService;
 import org.fao.sws.model.cdi.SwsScope;
 import org.fao.sws.model.config.DatabaseConfiguration;
 import org.fao.sws.model.i18n.LocaleResolver;
-import org.fao.sws.web.cdi.VisualizationType;
 import org.fao.sws.web.repository.VisualizationDataSource;
 import org.fao.sws.web.repository.VisualizationRepository;
 import org.fao.sws.web.repository.impl.VisualizationRepositoryImpl;
@@ -72,13 +72,25 @@ public class Producers {
 		return template;
 	}
 	
-	@Produces @ApplicationScoped @TestDouble @VisualizationType(SESSION)
+	
+	
+	// cdi 1.0 in tests picks also the implementation class as a bean, which creates ambiguity.
+	// we are forced to produce higher-priority beans to resolve it from here.
+	
+	@Produces @ApplicationScoped @TestDouble
 	VisualizationRepository<EditingSession> getSessionVisualizationRepository(
-			
-			@VisualizationType(SESSION) VisualizationDataSource<EditingSession> visualizationDataSource,
-			
+			VisualizationDataSource<EditingSession> visualizationDataSource,
 			DatabaseConfiguration config, 
 			DimensionService dimensionService,
+			LocaleResolver localeResolver) {
+		
+		return new VisualizationRepositoryImpl<>(visualizationDataSource,config, dimensionService, localeResolver);
+	}
+	
+	@Produces @SessionScoped @TestDouble
+	VisualizationRepository<Tag> getTagVisualizationRepository(
+			VisualizationDataSource<Tag> visualizationDataSource,
+			DatabaseConfiguration config, DimensionService dimensionService,
 			LocaleResolver localeResolver) {
 		
 		return new VisualizationRepositoryImpl<>(visualizationDataSource,config, dimensionService, localeResolver);

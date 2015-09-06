@@ -1,6 +1,5 @@
 package org.acme;
 
-import static org.fao.sws.lively.modules.Common.*;
 import static org.fao.sws.lively.modules.Configuration.*;
 import static org.fao.sws.lively.modules.Sessions.*;
 import static org.fao.sws.lively.modules.Sessions.NewSessionClause.Density.*;
@@ -60,12 +59,12 @@ public class SessionTest extends SwsTest {
 	@Test
 	public void density_can_be_customised() {
 		
-		EditingSession sessionA = aNewSession().side(5).density(LOW).over(aDataset());
-		EditingSession sessionB = aNewSession().side(5).density(HIGH).over(sessionA.getDataSet());
+		EditingSession sessionA = aNewSession().density(LOW).committedOver(aDataset());
+		EditingSession sessionB = aNewSession().density(HIGH).committedOver(sessionA.getDataSet());
 		
 		assertTrue("low density sessions have less points than high density sessions",
 				
-				pointsIn(sessionA).size() < pointsIn(sessionB).size()
+				observationsIn(sessionA).count() < observationsIn(sessionB).count()
 		);
 	}
 	

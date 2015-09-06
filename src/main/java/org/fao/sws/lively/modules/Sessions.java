@@ -1,12 +1,12 @@
 package org.fao.sws.lively.modules;
 
+import static java.lang.Math.*;
 import static java.lang.String.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
-import static org.fao.sws.domain.operational.Privilege.*;
+import static org.fao.sws.lively.modules.Common.*;
 import static org.fao.sws.lively.modules.Configuration.*;
 import static org.fao.sws.lively.modules.Metadata.*;
-import static org.fao.sws.lively.modules.Sessions.NewSessionClause.Density.*;
 import static org.fao.sws.lively.modules.Users.*;
 
 import java.math.BigDecimal;
@@ -26,7 +26,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import lombok.experimental.UtilityClass;
 
 import org.fao.sws.domain.plain.dataset.BaseDataValue;
 import org.fao.sws.domain.plain.dataset.Metadata;
@@ -42,6 +41,7 @@ import org.fao.sws.domain.plain.reference.DataSet;
 import org.fao.sws.domain.plain.reference.DimensionValue;
 import org.fao.sws.domain.plain.reference.FlagValue;
 import org.fao.sws.domain.plain.reference.MetadataType;
+import org.fao.sws.domain.plain.traits.operational.Privilege;
 import org.fao.sws.ejb.EditingSessionService;
 import org.fao.sws.ejb.ObservationService;
 import org.fao.sws.ejb.SessionDataService;
@@ -49,7 +49,6 @@ import org.fao.sws.ejb.SessionObservationService;
 import org.fao.sws.ejb.dto.SessionObservationDescriptor;
 import org.fao.sws.lively.SwsTest;
 import org.fao.sws.lively.modules.Sessions.NewSessionClause.Density;
-import org.fao.sws.model.config.FlagConfiguration;
 import org.fao.sws.model.dao.MetadataDao;
 import org.fao.sws.model.dao.ObservationDao;
 import org.fao.sws.model.dao.SessionMetadataDao;
@@ -59,11 +58,10 @@ import org.fao.sws.model.filter.DataSetFilter;
 import org.fao.sws.model.filter.ExtractionFilter;
 
 
-@UtilityClass
-public class Sessions extends Common {
+public class Sessions extends DomainModule {
 	
 				//inject dependencies in static class at startup
-				void startup(@Observes SwsTest.Start e, 
+				static void startup(@Observes SwsTest.Start e, 
 														EditingSessionService sessions, 
 														SessionDataService allobservations, 
 														SessionObservationService uncommitted,
@@ -85,28 +83,27 @@ public class Sessions extends Common {
 				
 				
 		
-	public EditingSessionService sessionservice;
-	public SessionDataService sessiondataservice;
-	public SessionObservationService sessionobservationservice;
-	public SessionMetadataDao sessionmetadatadao;
+	static public EditingSessionService sessionservice;
+	static public SessionDataService sessiondataservice;
+	static public SessionObservationService sessionobservationservice;
+	static public SessionMetadataDao sessionmetadatadao;
 	
-	public ObservationDao observationdao;
-	public ObservationService observationservice;
-	public MetadataDao metadatadao;
+	static public ObservationDao observationdao;
+	static public ObservationService observationservice;
+	static public MetadataDao metadatadao;
 	
 	
 	////////////  build  /////////////////////////////////////////////////////////////////////////////////////
 	
 	
-	//// local DSL extension
 	public interface NewSessionClause extends OverClause<DataSet,EditingSession>  {
 		
 		static final int defaultsize = 3;
 		
 		@AllArgsConstructor
-		enum Density {LOW(.4),
-					  MEDIUM(.7),
-					  HIGH(.9);
+		public static enum Density {LOW(.3),
+					  MEDIUM(.5),
+					  HIGH(.8);
 					  @Getter  final double threshold;}
 		
 		/** the owning user (ovverrides the current user). **/
@@ -120,27 +117,27 @@ public class Sessions extends Common {
 		/** the underlying dataset, **/
 		EditingSession committedOver(DataSet dataset);
 		
-	}
+}
+	
 	
 	
 	/**
 	 * Creates a session with random coordinates and random values.
 	 */
-	public NewSessionClause aNewSession() {
+	public static NewSessionClause aNewSession() {
 		
 		
 		
 		return new NewSessionClause() {
 			
-			User user = currentuser;
+			@Setter User by = currentuser;
 			@Setter int side = defaultsize;
-			@Setter Density density = MEDIUM;
+			@Setter Density density = Density.MEDIUM;
 			
-
 			@Override public EditingSession over(@NonNull DataSet ds)  {
 				
 				sudo(()->{
-					assign(READ,WRITE).to(oneof(groupsOf(user))).over(ds);
+					assign(Privilege.READ,Privilege.WRITE).to(oneof(groupsOf(by))).over(ds);
 				});
 
 				ExtractionFilter filter = new ExtractionFilter()
@@ -150,7 +147,7 @@ public class Sessions extends Common {
 												.setDimension2ids(aSelectionOver(ds,side));
 
 			
-				EditingSession session  = sessionservice.extract(filter,user);
+				EditingSession session  = sessionservice.extract(filter,by);
 				
 				log.info("new {}({}) over ({} {})",session.getDescription(),
 						   session.getId(),ds.getName(),
@@ -158,12 +155,6 @@ public class Sessions extends Common {
 
 				return session;
 								
-			}
-			
-			@Override
-			public NewSessionClause by(User user) {
-				this.user=user;
-				return this;
 			}
 			
 			@Override public EditingSession committedOver(DataSet dataset) {
@@ -196,7 +187,7 @@ public class Sessions extends Common {
 	
 	
 	
-	public NewObservationClause aNewObservationIn(EditingSession session) {
+	static public NewObservationClause aNewObservationIn(EditingSession session) {
 		
 		return new NewObservationClause() {
 		
@@ -253,7 +244,7 @@ public class Sessions extends Common {
 		
 	}
 	
-	public Map<String,String> flagsOf(BaseDataValue<?,?>  observation) {
+	static public Map<String,String> flagsOf(BaseDataValue<?,?>  observation) {
 		
 		Map<String,String> flags = new LinkedHashMap<>();
 		
@@ -270,10 +261,10 @@ public class Sessions extends Common {
 	//////////////// inspect //////////////////////////////////////////////////////////////////
 	
 	
-	Predicate<SessionObservationDto> committedobservations = o->!o.isDirty();
+	static Predicate<SessionObservationDto> committedobservations = o->!o.isDirty();
 
 	//local DSL extension
-	public interface LookupClause<T> {
+	static public interface LookupClause<T> {
 		
 		/** The (first) observation that satisfies a given predicate.*/
 		T lookup(Predicate<? super T> predicate);
@@ -283,7 +274,7 @@ public class Sessions extends Common {
 	}
 	
 	// lookup
-	public <T extends BaseDataValue<?,?>> LookupClause<T>  given(Stream<T> observations) {
+	static public <T extends BaseDataValue<?,?>> LookupClause<T>  given(Stream<T> observations) {
 		
 		return new LookupClause<T>() {
 			
@@ -297,38 +288,38 @@ public class Sessions extends Common {
 		};
 	}
 	
-	public Predicate<BaseDataValue<?,?>> withValue(@NonNull BigDecimal val) {
+	static public Predicate<BaseDataValue<?,?>> withValue(@NonNull BigDecimal val) {
 		return o->o.getValue().compareTo(val)==0;
 	}
 	
-	public Predicate<Observation> at(@NonNull ObservationCoordinates coords) {
+	static public Predicate<Observation> at(@NonNull ObservationCoordinates coords) {
 		return o->coords.getCode2dimension().equals(o.getDataPoint().getCode2dimension());
 	}
 	
-	public Predicate<SessionObservation> at(@NonNull List<Long> coords) {
+	static public Predicate<SessionObservation> at(@NonNull List<Long> coords) {
 		return o->o.getDimensionIds().equals(coords);
 	}
 	
-	public Predicate<BaseDataValue<?,?>> with(@NonNull Long id) {
+	static public Predicate<BaseDataValue<?,?>> with(@NonNull Long id) {
 		return o->o.getId().equals(id);
 	}
 	
 
 	
-	public void show(EditingSession session) {
+	static public void show(EditingSession session) {
 		
 		System.out.print("uncommitted\n");
 		System.out.print("-----------\n");
-		show(stagedIn(session),o->stateof(o));
+		Common.show(stagedIn(session),o->stateof(o));
 		
 		System.out.print("committed\n");
 		System.out.print("---------\n");
-		show(committedIn(session),o->stateof(o));
+		Common.show(committedIn(session),o->stateof(o));
 
 	}
 	
 	
-	public String stateof(SessionObservation obs) {
+	static public String stateof(SessionObservation obs) {
 		
 		return format("staged:(%s) %s@%s v%s  %sMETA=%s",
 									obs.getId(),
@@ -340,7 +331,7 @@ public class Sessions extends Common {
 	}
 	
 	
-	public String stateof(Observation obs) {
+	static public String stateof(Observation obs) {
 		
 		return format("committed:(%s) %s@%s v%s %sMETA=%s",
 									   obs.getId(),
@@ -353,15 +344,15 @@ public class Sessions extends Common {
 	
 
 	
-	public Predicate<BaseDataValue<?,?>> withoutMetadata = o->o.getMetadata().isEmpty();
-	public Predicate<BaseDataValue<?,?>> withMetadata = withoutMetadata.negate();
+	static public Predicate<BaseDataValue<?,?>> withoutMetadata = o->o.getMetadata().isEmpty();
+	static public Predicate<BaseDataValue<?,?>> withMetadata = withoutMetadata.negate();
 	
-	public Stream<Observation> committedIn(EditingSession session) {
+	static public Stream<Observation> committedIn(EditingSession session) {
 		
 		return committedIn(session,$->true);
 	}
 	
-	public Stream<Observation> committedIn(EditingSession session, Predicate<Observation> predicate) {
+	static public Stream<Observation> committedIn(EditingSession session, Predicate<Observation> predicate) {
 		
 		return observationsIn(session)
 					.filter(committedobservations)
@@ -385,7 +376,7 @@ public class Sessions extends Common {
 					.filter(predicate);
 	}
 	
-	public Stream<SessionObservation> stagedIn(EditingSession session) {
+	static public Stream<SessionObservation> stagedIn(EditingSession session) {
 		
 		return stagedIn(session,$->true);
 	}
@@ -393,7 +384,7 @@ public class Sessions extends Common {
 	/**
 	 * The observations that have been saved to the session, but not yet committed.
 	 */
-	public Stream<SessionObservation> stagedIn(EditingSession session,Predicate<SessionObservation> predicate) {
+	static public Stream<SessionObservation> stagedIn(EditingSession session,Predicate<SessionObservation> predicate) {
 		
 		/*  observations are here physically separated and can be easily accessed directly. */
 		
@@ -412,7 +403,7 @@ public class Sessions extends Common {
 	
 	
 	
-	public Stream<SessionObservationDto> observationsIn(EditingSession session) {
+	static public Stream<SessionObservationDto> observationsIn(EditingSession session) {
 		
 		/*	READTHIS:
 		  
@@ -449,7 +440,7 @@ public class Sessions extends Common {
 	/**
 	 * Fills a session with random values.
 	 */
-	public void randomlyFill(EditingSession session, Density density) {
+	public static void randomlyFill(EditingSession session, Density density) {
 		
 		/*	READTHIS:
 		    
@@ -469,16 +460,34 @@ public class Sessions extends Common {
 		
 		List<List<Long>> points = pointsIn(sessioncube);
 		
-		points.stream().forEach(point->addObservationTo(session,point));
+		Map<String,List<String>> flagmap = new HashMap<>(); 
+		all(Configuration.flagsOf(session.getDataSet())).forEach(
+				f -> flagmap.put(f.getCode(), all(valuesOf(f)))
+		);
 		
-		log.info("saved {} observations in {}",points.size(),session.getDescription());
+
+				
+		long count=0;
+		
+		for (List<Long> p : points) 
+			if (random()<density.threshold) {
+				
+				Map<String,String> flags  = new HashMap<>(); 
+				flagmap.forEach((k,v)->flags.put(k,randomIn(v)));
+				
+				addObservationTo(session,p,flags);
+				
+				count++;
+			}
+		
+		log.info("saved {} observations in {}",count,session.getDescription());
 		
 	}
 	
 	/**
 	 * Persists changes to session (without committing them).
 	 */
-	public void saveAndCommit(SessionObservation observation) {
+	static public void saveAndCommit(SessionObservation observation) {
 		saveValueAndFlagsOf(observation);
 		saveMetadataOf(observation);
 		commit(observation.getEditingSession());
@@ -487,7 +496,7 @@ public class Sessions extends Common {
 	/**
 	 * Persists value/falg changes to session (without committing them).
 	 */
-	public void saveValueAndFlagsOf(SessionObservation observation) {
+	static public void saveValueAndFlagsOf(SessionObservation observation) {
 		
 		//save value/flags
 		sessionobservationservice.updateMultipleValues(singletonList(observation));
@@ -496,7 +505,7 @@ public class Sessions extends Common {
 	/**
 	 * Persists metadata changes to session (without committing them).
 	 */
-	public void saveMetadataOf(SessionObservation observation) {
+	static public void saveMetadataOf(SessionObservation observation) {
 		
 		EditingSession session = observation.getEditingSession();
 	
@@ -520,7 +529,7 @@ public class Sessions extends Common {
 	/**
 	 * Save staged observations in a given session.
 	 */
-	public void commit(EditingSession session) {
+	static public void commit(EditingSession session) {
 		
 		sessionservice.transferToMain(session,null,null); //no conflicts here to worry about.
 		
@@ -528,7 +537,7 @@ public class Sessions extends Common {
 	}
 	
 	
-	public SessionMetadata aNewMetadataFor(SessionObservation observation) {
+	static public SessionMetadata aNewMetadataFor(SessionObservation observation) {
 		
 		MetadataType type = aMetadataType();
 		
@@ -546,7 +555,7 @@ public class Sessions extends Common {
 	
 	
 	
-	public SessionMetadataElement aNewMetadataElementFor(SessionMetadata metadata) {
+	static public SessionMetadataElement aNewMetadataElementFor(SessionMetadata metadata) {
 		
 		return new SessionMetadataElement(null,"...", aMetadataElementTypeOf(metadata.getType()) , metadata);
 		
@@ -556,13 +565,13 @@ public class Sessions extends Common {
 	
 
 	/** A random selection of a given 'side' over a given dataset. */
-	private Map<String,List<Long>> aSelectionOver(DataSet ds, int side) {
+	private static Map<String,List<Long>> aSelectionOver(DataSet ds, int side) {
 		
 		Map<String,List<Long>> selection = new HashMap<>();
 		
 		dimensionsOf(ds).forEach(dim-> {
 			
-			Stream<Long> coords = shuffle(all(valuesOf(dim))).filter(leaves).limit(side).map(coordinateids);
+			Stream<Long> coords = Common.shuffle(all(valuesOf(dim))).filter(leaves).limit(side).map(coordinateids);
 		
 			selection.put(dim.getCode(), all(coords));
 		});
@@ -570,12 +579,12 @@ public class Sessions extends Common {
 		return selection;	
 	}
 	
-	public List<List<Long>> pointsIn(EditingSession session) {
+	static public List<List<Long>> pointsIn(EditingSession session) {
 		return pointsIn(new ArrayList<>(session.getDimension2ids().values()));
 	}
 	
 	/** Data points inside a selection. */
-	private List<List<Long>> pointsIn(List<List<Long>> selection) {
+	private static List<List<Long>> pointsIn(List<List<Long>> selection) {
 		
 		//inefficient but clear: good for testing.
 		
@@ -615,7 +624,7 @@ public class Sessions extends Common {
 	}
 	
 	
-	private DataSetFilter filterFrom(EditingSession session) {
+	static private DataSetFilter filterFrom(EditingSession session) {
 		
 		return new DataSetFilter().setDataSetCode(session.getDataSet().getName())
 								  .setDomainCode(session.getDataSet()
@@ -623,7 +632,7 @@ public class Sessions extends Common {
 	}
 	
 	
-	private Map<String,Long> unfoldCoordinates(Map<String,DimensionValue> coords) {
+	static private Map<String,Long> unfoldCoordinates(Map<String,DimensionValue> coords) {
 		
 		Map<String,Long> converted = new LinkedHashMap<>();
 		coords.forEach((k,v)->converted.put(k,v.getId()));
@@ -632,7 +641,7 @@ public class Sessions extends Common {
 	}
 	
 	
-	private Map<String,DimensionValue> foldCoordinates(Map<String,Long> coords) {
+	static private Map<String,DimensionValue> foldCoordinates(Map<String,Long> coords) {
 		
 		Map<String,DimensionValue> converted = new LinkedHashMap<>();
 		coords.forEach((k,v)->converted.put(k,new DimensionValue(v)));
@@ -640,13 +649,13 @@ public class Sessions extends Common {
 		
 	}
 	
-	private <T> List<T> valuesIn(Map<String,T> coords) {
+	static private <T> List<T> valuesIn(Map<String,T> coords) {
 		
 		return new ArrayList<>(coords.values());
 		
 	}
 
-	private Map<String,Long> mapInPivotingOrder(List<Long> coords,EditingSession session) {
+	static private Map<String,Long> mapInPivotingOrder(List<Long> coords,EditingSession session) {
 		
 		Pivoting pivoting = configOf(session.getDataSet()).defaultPivoting();
 		
@@ -659,7 +668,7 @@ public class Sessions extends Common {
 		return mapInConfigOrder(named, session);
 	}
 	
-	private Map<String,Long> mapInConfigOrder(Map<String,Long> coords,EditingSession session) {
+	static private Map<String,Long> mapInConfigOrder(Map<String,Long> coords,EditingSession session) {
 		
 		Map<String,Long> converted = new LinkedHashMap<>();
 		
@@ -669,14 +678,13 @@ public class Sessions extends Common {
 	}
 	
 	
-	private SessionObservation addObservationTo(EditingSession session, List<Long> point) {
-		
-		FlagConfiguration flag = randomIn(all(Configuration.flagsOf(session.getDataSet())));
+	private static SessionObservation addObservationTo(EditingSession session, List<Long> point, Map<String,String> flags) {
 		
 		SessionObservation observation = aNewObservationIn(session).at(point);
 		
-		if (flag!=null) 
-			observation.setFlag(flag.getCode(),new FlagValue(oneof(valuesOf(flag)),random("flag")));
+		all(flags.entrySet()).forEach(
+				e -> observation.setFlag(e.getKey(),new FlagValue(e.getValue(),random("flag")))
+		);
 		
 		saveValueAndFlagsOf(observation);
 		
@@ -689,7 +697,7 @@ public class Sessions extends Common {
 		return observation;
 	}
 	
-	private List<SessionMetadata> generateMetadataFor(SessionObservation observation) {
+	static private  List<SessionMetadata> generateMetadataFor(SessionObservation observation) {
 		
 		return IntStream.range(0,randomBetween(2,4)) //sometimes, no metadata at all.
 								.mapToObj(i->aNewMetadataFor(observation))
@@ -698,7 +706,7 @@ public class Sessions extends Common {
 	}
 
 	
-	private SessionMetadata convert(Metadata metadata, SessionObservation obs) {
+	static private SessionMetadata convert(Metadata metadata, SessionObservation obs) {
 		
 		SessionMetadata smetadata = new SessionMetadata(null,metadata.getType(),metadata.getLanguage(),obs);
 		

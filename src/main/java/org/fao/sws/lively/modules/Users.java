@@ -2,6 +2,7 @@ package org.fao.sws.lively.modules;
 
 import static java.util.Arrays.*;
 import static java.util.UUID.*;
+import static org.fao.sws.lively.modules.Common.*;
 
 import java.util.HashSet;
 import java.util.concurrent.Callable;
@@ -13,11 +14,11 @@ import javax.enterprise.event.Observes;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
-import org.fao.sws.domain.operational.Privilege;
 import org.fao.sws.domain.plain.operational.Group;
 import org.fao.sws.domain.plain.operational.Permission;
 import org.fao.sws.domain.plain.operational.User;
 import org.fao.sws.domain.plain.reference.DataSet;
+import org.fao.sws.domain.plain.traits.operational.Privilege;
 import org.fao.sws.ejb.GroupService;
 import org.fao.sws.ejb.PermissionService;
 import org.fao.sws.ejb.UserService;
@@ -27,7 +28,7 @@ import org.fao.sws.model.dao.PermissionDao;
 import org.fao.sws.model.filter.PermissionFilter;
 
 @UtilityClass
-public class Users extends Common {
+public class Users extends DomainModule {
 	
 	void startup(@Observes Start e, 
 			
@@ -160,7 +161,7 @@ public class Users extends Common {
 	
 	public User anAdmin() {
 		
-		return aUserIn(anAdminGroup());
+		return oneof(admins());
 
 	}
 	
@@ -214,7 +215,7 @@ public class Users extends Common {
 	
 	public Stream<User> usersIn(Group group) {
 		
-		return userservice.getUsersByGrpId(group.getId()).stream();
+		return shuffle(all(userservice.getUsersByGrpId(group.getId())));
 
 	}
 	

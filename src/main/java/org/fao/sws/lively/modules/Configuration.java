@@ -1,5 +1,7 @@
 package org.fao.sws.lively.modules;
 
+import static org.fao.sws.lively.modules.Common.*;
+
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -25,7 +27,7 @@ import org.fao.sws.model.filter.FlagFilter;
 
 /** Utilities for tests that work with configuration */
 @UtilityClass
-public class Configuration extends Common {
+public class Configuration extends DomainModule {
 		
 				//tricksies: simulates static injection via eventing.
 				static void startup(@Observes Start e, 
@@ -74,7 +76,7 @@ public class Configuration extends Common {
 		//could use configuration, but this works also on remote sources, which is handy.
 		Stream<String> names = all(datasetservice.getCompleteMapOfDatasetsPerDomain().values()).flatMap(ds->all(ds.keySet()));
 		
-		return shuffle(names).map(code->datasetservice.getDataSetByCode(code));
+		return Common.shuffle(names).map(code->datasetservice.getDataSetByCode(code));
 		
 	}
 	
@@ -211,7 +213,7 @@ public class Configuration extends Common {
 
 	public Stream<FlagConfiguration> flags() {
 		
-		return shuffle(distinct(datasetConfigs().flatMap(c->c.observation().getFlagConfigurations().stream())));
+		return distinct(datasetConfigs().flatMap(c->all(c.observation().getFlagConfigurations())));
 		
 	}
 	
@@ -223,7 +225,7 @@ public class Configuration extends Common {
 	
 	public Stream<FlagConfiguration> flagsOf(@NonNull DataSet dataset) {
 		
-		return configOf(dataset).observation().getFlagConfigurations().stream();
+		return shuffle(all(configOf(dataset).observation().getFlagConfigurations()));
 	
 	}
 	
@@ -231,9 +233,12 @@ public class Configuration extends Common {
 	
 	public Stream<String> valuesOf(@NonNull FlagConfiguration flag) {
 		
+		//configuration is so messed up that we can get to flag tables only via
+		// a dataset that references it...
+		
 		DataSetConfiguration ds = oneof(datasetConfigs().filter(
 				
-			 c->all(c.observation().getFlagConfigurations()).filter(isSameAs(c)).findAny().isPresent()
+			 c->all(c.observation().getFlagConfigurations()).filter(isSameAs(flag)).findAny().isPresent()
 			
 		)); 
 		

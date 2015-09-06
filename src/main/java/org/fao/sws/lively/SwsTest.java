@@ -1,9 +1,9 @@
 package org.fao.sws.lively;
 
 import static java.lang.System.*;
-import static org.fao.sws.lively.modules.Common.*;
 import static org.fao.sws.lively.modules.Users.*;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,8 +18,9 @@ import lombok.SneakyThrows;
 
 import org.apache.openejb.api.LocalClient;
 import org.apache.openejb.util.Slf4jLogStreamFactory;
+import org.fao.sws.domain.plain.util.ConfigLocations;
 import org.fao.sws.lively.core.Database.RemoteRule;
-import org.fao.sws.model.config.DatabaseConfiguration;
+import org.fao.sws.lively.modules.Common;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -33,7 +34,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 // may evolve into proper Junit Runner.
 
 @LocalClient
-public class SwsTest { //OpenEJB requires it not to be abstract, or else no injection.
+public class SwsTest extends Common { //OpenEJB requires it not to be abstract, or else no injection.
 
 	//these scream for a common base class, but CDI 1.0 doesn't like it. Reconsider with Java EE7.
 	public static class Start {} 
@@ -97,7 +98,7 @@ public class SwsTest { //OpenEJB requires it not to be abstract, or else no inje
 	
 	static void configure_local_environment() {
 	
-		System.setProperty(DatabaseConfiguration.CONFIG_ROOT_PROPERTY, "src/main/resources");
+		ConfigLocations.root=new File("src/main/resources/config");
 	}
 	
 	static void configure_logging() {
@@ -150,8 +151,9 @@ public class SwsTest { //OpenEJB requires it not to be abstract, or else no inje
 		
 		props.put("openejb.log.factory", Slf4jLogStreamFactory.class.getCanonicalName()); //slf4j
 		props.put("org.slf4j.simpleLogger.log.org.apache", "warn");
-		props.put("org.slf4j.simpleLogger.log.OpenEJB", "warn");						  //quiet	
-		props.put("openejb.deployments.classpath.include", ".*/target/classes/");		  //lean
+		props.put("org.slf4j.simpleLogger.log.OpenEJB", "warn");  //quiet						
+		props.put("openejb.deployments.classpath.include", ".*(sws-.*|/target/classes/)");
+		//props.put("openejb.deployments.classpath.include", ".*/target/classes/");		  //lean
 		
 		
 		long now = currentTimeMillis();

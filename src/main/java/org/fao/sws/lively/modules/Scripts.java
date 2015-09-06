@@ -1,5 +1,7 @@
 package org.fao.sws.lively.modules;
 
+import static org.fao.sws.lively.modules.Common.*;
+
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -16,12 +18,12 @@ import org.fao.sws.lively.SwsTest.Start;
 import org.fao.sws.model.filter.ComputationModuleFilter;
 
 @UtilityClass
-public class Modules extends Common {
+public class Scripts extends DomainModule {
 	
 	void startup(@Observes Start e, ComputationModuleService modules, ComputationScheduledService scheduled) {
 		
-		Modules.scheduledservice = scheduled;
-		Modules.moduleservice=modules;
+		Scripts.scheduledservice = scheduled;
+		Scripts.moduleservice=modules;
 	}
 	
 	

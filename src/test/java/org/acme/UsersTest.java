@@ -1,7 +1,6 @@
 package org.acme;
 
-import static org.fao.sws.domain.operational.Privilege.*;
-import static org.fao.sws.lively.modules.Common.*;
+import static org.fao.sws.domain.plain.traits.operational.Privilege.*;
 import static org.fao.sws.lively.modules.Configuration.*;
 import static org.fao.sws.lively.modules.Users.*;
 import static org.junit.Assert.*;

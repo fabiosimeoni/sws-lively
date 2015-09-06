@@ -31,7 +31,7 @@ public class CliTest extends SwsTest {
 
 		assertNotNull(ds);
 		
-		int result = service.reloadConfigFile(new File("src/main/resources/config/application/dataset/C030Agriculture.xml"));
+		int result = service.reloadConfigFile(new File("src/main/resources/config/dataset/C030Agriculture.xml"));
 		
 		assertTrue(result==0);
 		

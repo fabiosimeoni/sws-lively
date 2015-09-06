@@ -1,7 +1,6 @@
 package org.acme.sessions;
 
 import static java.math.BigDecimal.*;
-import static org.fao.sws.lively.modules.Common.*;
 import static org.fao.sws.lively.modules.Configuration.*;
 import static org.fao.sws.lively.modules.Sessions.*;
 import static org.junit.Assert.*;
@@ -16,6 +15,7 @@ import org.fao.sws.domain.plain.operational.EditingSession;
 import org.fao.sws.domain.plain.reference.FlagValue;
 import org.fao.sws.lively.SwsTest;
 import org.junit.Test;
+
 public class SessionEditing extends SwsTest {
 
 	@Test
@@ -206,6 +206,8 @@ public class SessionEditing extends SwsTest {
 	public void sessions_retain_observations_only_if_they_are_effective_updates() {
 		
 		EditingSession session = aNewSession().committedOver(aDatasetThat(hasFlags));
+		
+		show(session);
 		
 		Observation committed = oneof(committedIn(session));
 		

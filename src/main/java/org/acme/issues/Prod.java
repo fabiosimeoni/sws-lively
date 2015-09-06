@@ -1,7 +1,6 @@
 package org.acme.issues;
 
 import static org.fao.sws.lively.core.Database.Source.*;
-import static org.fao.sws.lively.modules.Common.*;
 import static org.fao.sws.lively.modules.Users.*;
 
 import org.fao.sws.lively.SwsTest;
